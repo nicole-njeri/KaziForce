@@ -9,8 +9,9 @@ const app = express()
 
 const PORT = process.env.PORT || 5000
 
-// Middleware
+// Middleware - allows the ract frontend on port 5173
 app.use(cors())
+// allows the backend to receive JSON data in requests
 app.use(express.json())
 
 // Test backend
@@ -20,7 +21,7 @@ app.get('/', (req, res) => {
   })
 })
 
-// Authentication routes
+// Authentication routes - API
 app.use('/api/auth', authRoutes)
 
 // Test database
