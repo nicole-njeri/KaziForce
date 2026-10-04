@@ -1,0 +1,730 @@
+{
+  "relationships": {
+    "react": {
+      "parent": "frontend development",
+      "related": [
+        "javascript",
+        "html",
+        "css",
+        "web development"
+      ]
+    },
+
+    "javascript": {
+      "parent": "frontend development",
+      "related": [
+        "react",
+        "html",
+        "css",
+        "web development",
+        "node.js"
+      ]
+    },
+
+    "html": {
+      "parent": "frontend development",
+      "related": [
+        "css",
+        "javascript",
+        "react",
+        "web development"
+      ]
+    },
+
+    "css": {
+      "parent": "frontend development",
+      "related": [
+        "html",
+        "javascript",
+        "react",
+        "web development"
+      ]
+    },
+
+    "frontend development": {
+      "parent": "web development",
+      "related": [
+        "react",
+        "javascript",
+        "html",
+        "css",
+        "ui design"
+      ]
+    },
+
+    "node.js": {
+      "parent": "backend development",
+      "related": [
+        "express.js",
+        "javascript",
+        "web development"
+      ]
+    },
+
+    "express.js": {
+      "parent": "backend development",
+      "related": [
+        "node.js",
+        "javascript",
+        "web development"
+      ]
+    },
+
+    "python": {
+      "parent": "backend development",
+      "related": [
+        "flask",
+        "data analysis",
+        "data science",
+        "machine learning"
+      ]
+    },
+
+    "flask": {
+      "parent": "backend development",
+      "related": [
+        "python",
+        "web development",
+        "node.js"
+      ]
+    },
+
+    "backend development": {
+      "parent": "web development",
+      "related": [
+        "node.js",
+        "express.js",
+        "python",
+        "flask",
+        "postgresql"
+      ]
+    },
+
+    "web development": {
+      "parent": "technology",
+      "related": [
+        "frontend development",
+        "backend development",
+        "javascript",
+        "html",
+        "css"
+      ]
+    },
+
+    "flutter": {
+      "parent": "mobile development",
+      "related": [
+        "dart",
+        "mobile app development"
+      ]
+    },
+
+    "dart": {
+      "parent": "mobile development",
+      "related": [
+        "flutter",
+        "mobile app development"
+      ]
+    },
+
+    "android development": {
+      "parent": "mobile development",
+      "related": [
+        "mobile app development"
+      ]
+    },
+
+    "mobile app development": {
+      "parent": "mobile development",
+      "related": [
+        "flutter",
+        "dart",
+        "android development"
+      ]
+    },
+
+    "sql": {
+      "parent": "database development",
+      "related": [
+        "postgresql",
+        "mysql",
+        "database design",
+        "database management"
+      ]
+    },
+
+    "postgresql": {
+      "parent": "database development",
+      "related": [
+        "sql",
+        "database design",
+        "database management"
+      ]
+    },
+
+    "mysql": {
+      "parent": "database development",
+      "related": [
+        "sql",
+        "database design",
+        "database management"
+      ]
+    },
+
+    "database design": {
+      "parent": "database development",
+      "related": [
+        "sql",
+        "postgresql",
+        "mysql",
+        "database management"
+      ]
+    },
+
+    "database management": {
+      "parent": "database development",
+      "related": [
+        "sql",
+        "postgresql",
+        "mysql",
+        "database design"
+      ]
+    },
+
+    "aws": {
+      "parent": "cloud and devops",
+      "related": [
+        "cloud computing",
+        "devops",
+        "linux"
+      ]
+    },
+
+    "cloud computing": {
+      "parent": "cloud and devops",
+      "related": [
+        "aws",
+        "devops",
+        "linux"
+      ]
+    },
+
+    "docker": {
+      "parent": "cloud and devops",
+      "related": [
+        "devops",
+        "linux",
+        "cloud computing"
+      ]
+    },
+
+    "podman": {
+      "parent": "cloud and devops",
+      "related": [
+        "docker",
+        "devops",
+        "linux"
+      ]
+    },
+
+    "devops": {
+      "parent": "cloud and devops",
+      "related": [
+        "docker",
+        "podman",
+        "linux",
+        "cloud computing"
+      ]
+    },
+
+    "linux": {
+      "parent": "cloud and devops",
+      "related": [
+        "devops",
+        "docker",
+        "cloud computing"
+      ]
+    },
+
+    "photoshop": {
+      "parent": "graphic design",
+      "related": [
+        "graphic design",
+        "illustrator",
+        "branding"
+      ]
+    },
+
+    "illustrator": {
+      "parent": "graphic design",
+      "related": [
+        "graphic design",
+        "photoshop",
+        "branding"
+      ]
+    },
+
+    "graphic design": {
+      "parent": "graphic design",
+      "related": [
+        "photoshop",
+        "illustrator",
+        "logo design",
+        "branding"
+      ]
+    },
+
+    "logo design": {
+      "parent": "graphic design",
+      "related": [
+        "photoshop",
+        "illustrator",
+        "branding"
+      ]
+    },
+
+    "branding": {
+      "parent": "graphic design",
+      "related": [
+        "logo design",
+        "photoshop",
+        "illustrator"
+      ]
+    },
+
+    "ui design": {
+      "parent": "ui/ux design",
+      "related": [
+        "ux design",
+        "figma",
+        "wireframing",
+        "prototyping",
+        "frontend development"
+      ]
+    },
+
+    "ux design": {
+      "parent": "ui/ux design",
+      "related": [
+        "ui design",
+        "figma",
+        "wireframing",
+        "prototyping"
+      ]
+    },
+
+    "figma": {
+      "parent": "ui/ux design",
+      "related": [
+        "ui design",
+        "ux design",
+        "wireframing",
+        "prototyping"
+      ]
+    },
+
+    "wireframing": {
+      "parent": "ui/ux design",
+      "related": [
+        "figma",
+        "ui design",
+        "ux design",
+        "prototyping"
+      ]
+    },
+
+    "prototyping": {
+      "parent": "ui/ux design",
+      "related": [
+        "figma",
+        "ui design",
+        "ux design",
+        "wireframing"
+      ]
+    },
+
+    "digital marketing": {
+      "parent": "digital marketing",
+      "related": [
+        "social media marketing",
+        "seo",
+        "email marketing",
+        "content marketing"
+      ]
+    },
+
+    "social media marketing": {
+      "parent": "digital marketing",
+      "related": [
+        "digital marketing",
+        "social media advertising",
+        "content marketing"
+      ]
+    },
+
+    "search engine optimization": {
+      "parent": "digital marketing",
+      "related": [
+        "seo",
+        "content marketing",
+        "digital marketing"
+      ]
+    },
+
+    "seo": {
+      "parent": "digital marketing",
+      "related": [
+        "search engine optimization",
+        "content marketing",
+        "digital marketing"
+      ]
+    },
+
+    "email marketing": {
+      "parent": "digital marketing",
+      "related": [
+        "content marketing",
+        "digital marketing"
+      ]
+    },
+
+    "content marketing": {
+      "parent": "digital marketing",
+      "related": [
+        "social media marketing",
+        "seo",
+        "email marketing",
+        "digital marketing"
+      ]
+    },
+
+    "content writing": {
+      "parent": "content writing",
+      "related": [
+        "copywriting",
+        "blog writing",
+        "technical writing"
+      ]
+    },
+
+    "copywriting": {
+      "parent": "content writing",
+      "related": [
+        "content writing",
+        "blog writing",
+        "technical writing"
+      ]
+    },
+
+    "blog writing": {
+      "parent": "content writing",
+      "related": [
+        "content writing",
+        "copywriting",
+        "seo"
+      ]
+    },
+
+    "technical writing": {
+      "parent": "content writing",
+      "related": [
+        "content writing",
+        "copywriting"
+      ]
+    },
+
+    "editing": {
+      "parent": "editing",
+      "related": [
+        "proofreading",
+        "content editing"
+      ]
+    },
+
+    "proofreading": {
+      "parent": "editing",
+      "related": [
+        "editing",
+        "content editing"
+      ]
+    },
+
+    "content editing": {
+      "parent": "editing",
+      "related": [
+        "editing",
+        "proofreading"
+      ]
+    },
+
+    "virtual assistance": {
+      "parent": "administrative support",
+      "related": [
+        "data entry",
+        "calendar management",
+        "email management",
+        "document management"
+      ]
+    },
+
+    "data entry": {
+      "parent": "administrative support",
+      "related": [
+        "virtual assistance",
+        "document management"
+      ]
+    },
+
+    "calendar management": {
+      "parent": "administrative support",
+      "related": [
+        "virtual assistance",
+        "email management",
+        "document management"
+      ]
+    },
+
+    "email management": {
+      "parent": "administrative support",
+      "related": [
+        "virtual assistance",
+        "calendar management",
+        "document management"
+      ]
+    },
+
+    "document management": {
+      "parent": "administrative support",
+      "related": [
+        "data entry",
+        "virtual assistance",
+        "calendar management"
+      ]
+    },
+
+    "project management": {
+      "parent": "project management",
+      "related": [
+        "task management",
+        "team coordination",
+        "project planning"
+      ]
+    },
+
+    "task management": {
+      "parent": "project management",
+      "related": [
+        "project management",
+        "team coordination"
+      ]
+    },
+
+    "team coordination": {
+      "parent": "project management",
+      "related": [
+        "project management",
+        "task management"
+      ]
+    },
+
+    "project planning": {
+      "parent": "project management",
+      "related": [
+        "project management",
+        "task management"
+      ]
+    },
+
+    "bookkeeping": {
+      "parent": "finance and accounting",
+      "related": [
+        "accounting",
+        "financial reporting",
+        "excel"
+      ]
+    },
+
+    "accounting": {
+      "parent": "finance and accounting",
+      "related": [
+        "bookkeeping",
+        "financial reporting",
+        "financial analysis"
+      ]
+    },
+
+    "financial reporting": {
+      "parent": "finance and accounting",
+      "related": [
+        "accounting",
+        "bookkeeping",
+        "financial analysis"
+      ]
+    },
+
+    "financial analysis": {
+      "parent": "finance and accounting",
+      "related": [
+        "accounting",
+        "financial reporting",
+        "data analysis"
+      ]
+    },
+
+    "data analysis": {
+      "parent": "data analysis",
+      "related": [
+        "excel",
+        "power bi",
+        "data visualization",
+        "statistics",
+        "sql"
+      ]
+    },
+
+    "excel": {
+      "parent": "data analysis",
+      "related": [
+        "data analysis",
+        "data visualization",
+        "power bi",
+        "financial analysis"
+      ]
+    },
+
+    "power bi": {
+      "parent": "data analysis",
+      "related": [
+        "data analysis",
+        "data visualization",
+        "excel"
+      ]
+    },
+
+    "data visualization": {
+      "parent": "data analysis",
+      "related": [
+        "data analysis",
+        "power bi",
+        "excel"
+      ]
+    },
+
+    "statistics": {
+      "parent": "data analysis",
+      "related": [
+        "data analysis",
+        "data science",
+        "statistical analysis"
+      ]
+    },
+
+    "data science": {
+      "parent": "data science",
+      "related": [
+        "data analysis",
+        "machine learning",
+        "python",
+        "statistics"
+      ]
+    },
+
+    "machine learning": {
+      "parent": "data science",
+      "related": [
+        "python",
+        "data science",
+        "statistical analysis"
+      ]
+    },
+
+    "statistical analysis": {
+      "parent": "data science",
+      "related": [
+        "statistics",
+        "data analysis",
+        "machine learning"
+      ]
+    },
+
+    "customer support": {
+      "parent": "customer support",
+      "related": [
+        "customer service",
+        "client relations",
+        "communication",
+        "call centre"
+      ]
+    },
+
+    "customer service": {
+      "parent": "customer support",
+      "related": [
+        "customer support",
+        "client relations",
+        "communication"
+      ]
+    },
+
+    "call centre": {
+      "parent": "customer support",
+      "related": [
+        "customer service",
+        "customer support",
+        "communication"
+      ]
+    },
+
+    "client relations": {
+      "parent": "customer support",
+      "related": [
+        "customer service",
+        "customer support",
+        "communication"
+      ]
+    },
+
+    "communication": {
+      "parent": "customer support",
+      "related": [
+        "customer service",
+        "customer support",
+        "client relations"
+      ]
+    },
+
+    "tutoring": {
+      "parent": "teaching",
+      "related": [
+        "online teaching",
+        "training"
+      ]
+    },
+
+    "online teaching": {
+      "parent": "teaching",
+      "related": [
+        "tutoring",
+        "training",
+        "curriculum development"
+      ]
+    },
+
+    "training": {
+      "parent": "teaching",
+      "related": [
+        "tutoring",
+        "online teaching",
+        "curriculum development"
+      ]
+    },
+
+    "curriculum development": {
+      "parent": "teaching",
+      "related": [
+        "training",
+        "online teaching"
+      ]
+    }
+  }
+}

@@ -1,0 +1,242 @@
+{
+  "categories": {
+    "technology": {
+      "name": "Technology",
+      "specializations": {
+        "web_development": {
+          "name": "Web Development",
+          "subspecializations": {
+            "frontend_development": {
+              "name": "Frontend Development",
+              "skills": [
+                "react",
+                "javascript",
+                "html",
+                "css"
+              ]
+            },
+            "backend_development": {
+              "name": "Backend Development",
+              "skills": [
+                "node.js",
+                "express.js",
+                "python",
+                "flask"
+              ]
+            }
+          }
+        },
+        "mobile_development": {
+          "name": "Mobile Development",
+          "skills": [
+            "flutter",
+            "dart",
+            "android development",
+            "mobile app development"
+          ]
+        },
+        "database_development": {
+          "name": "Database Development",
+          "skills": [
+            "sql",
+            "postgresql",
+            "mysql",
+            "database design",
+            "database management"
+          ]
+        },
+        "cloud_and_devops": {
+          "name": "Cloud and DevOps",
+          "skills": [
+            "aws",
+            "cloud computing",
+            "docker",
+            "podman",
+            "devops",
+            "linux"
+          ]
+        }
+      }
+    },
+
+    "design": {
+      "name": "Design",
+      "specializations": {
+        "graphic_design": {
+          "name": "Graphic Design",
+          "skills": [
+            "graphic design",
+            "photoshop",
+            "illustrator",
+            "logo design",
+            "branding"
+          ]
+        },
+        "ui_ux_design": {
+          "name": "UI/UX Design",
+          "skills": [
+            "ui design",
+            "ux design",
+            "figma",
+            "wireframing",
+            "prototyping"
+          ]
+        }
+      }
+    },
+
+    "marketing": {
+      "name": "Marketing",
+      "specializations": {
+        "digital_marketing": {
+          "name": "Digital Marketing",
+          "skills": [
+            "digital marketing",
+            "social media marketing",
+            "search engine optimization",
+            "seo",
+            "email marketing",
+            "content marketing"
+          ]
+        },
+        "advertising": {
+          "name": "Advertising",
+          "skills": [
+            "online advertising",
+            "social media advertising",
+            "campaign management",
+            "advertising"
+          ]
+        }
+      }
+    },
+
+    "writing_and_content": {
+      "name": "Writing and Content",
+      "specializations": {
+        "content_writing": {
+          "name": "Content Writing",
+          "skills": [
+            "content writing",
+            "copywriting",
+            "blog writing",
+            "technical writing"
+          ]
+        },
+        "editing": {
+          "name": "Editing",
+          "skills": [
+            "editing",
+            "proofreading",
+            "content editing"
+          ]
+        }
+      }
+    },
+
+    "business_and_administration": {
+      "name": "Business and Administration",
+      "specializations": {
+        "administrative_support": {
+          "name": "Administrative Support",
+          "skills": [
+            "administrative support",
+            "data entry",
+            "virtual assistance",
+            "calendar management",
+            "email management",
+            "document management"
+          ]
+        },
+        "project_management": {
+          "name": "Project Management",
+          "skills": [
+            "project management",
+            "task management",
+            "team coordination",
+            "project planning"
+          ]
+        },
+        "finance_and_accounting": {
+          "name": "Finance and Accounting",
+          "skills": [
+            "bookkeeping",
+            "accounting",
+            "financial reporting",
+            "financial analysis"
+          ]
+        }
+      }
+    },
+
+    "data_and_analytics": {
+      "name": "Data and Analytics",
+      "specializations": {
+        "data_analysis": {
+          "name": "Data Analysis",
+          "skills": [
+            "data analysis",
+            "excel",
+            "power bi",
+            "data visualization",
+            "statistics"
+          ]
+        },
+        "data_science": {
+          "name": "Data Science",
+          "skills": [
+            "data science",
+            "machine learning",
+            "python",
+            "statistical analysis"
+          ]
+        }
+      }
+    },
+
+    "customer_service": {
+      "name": "Customer Service",
+      "specializations": {
+        "customer_support": {
+          "name": "Customer Support",
+          "skills": [
+            "customer support",
+            "customer service",
+            "call centre",
+            "client relations",
+            "communication"
+          ]
+        }
+      }
+    },
+
+    "education_and_training": {
+      "name": "Education and Training",
+      "specializations": {
+        "teaching": {
+          "name": "Teaching",
+          "skills": [
+            "tutoring",
+            "online teaching",
+            "training",
+            "curriculum development"
+          ]
+        }
+      }
+    }
+  },
+
+  "locations": [
+    "nairobi",
+    "mombasa",
+    "kisumu",
+    "nakuru",
+    "eldoret",
+    "kiambu",
+    "machakos",
+    "nyeri",
+    "meru",
+    "kakamega",
+    "kenya"
+  ]
+}

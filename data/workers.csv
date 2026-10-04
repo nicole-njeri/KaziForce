@@ -1,0 +1,19 @@
+worker_id,skills,experience_years,availability,location,reputation
+W001,"React,JavaScript,HTML,CSS",2,"Full-time","Nairobi",4.5
+W002,"Python,Flask,PostgreSQL,SQL",3,"Full-time","Nairobi",4.2
+W003,"Graphic Design,Photoshop,Illustrator,Logo Design",4,"Full-time","Mombasa",4.8
+W004,"Flutter,Dart,Mobile App Development",2,"Part-time","Nairobi",4.3
+W005,"Data Analysis,Excel,Power BI,Data Visualization",3,"Full-time","Nairobi",4.6
+W006,"Virtual Assistance,Data Entry,Email Management,Calendar Management",2,"Part-time","Kiambu",4.4
+W007,"Content Writing,Copywriting,Blog Writing,SEO",3,"Full-time","Nairobi",4.1
+W008,"Customer Support,Customer Service,Communication,Client Relations",4,"Full-time","Kisumu",4.7
+W009,"Node.js,Express.js,JavaScript,PostgreSQL",4,"Full-time","Nairobi",4.6
+W010,"Figma,UI Design,UX Design,Wireframing,Prototyping",3,"Part-time","Nairobi",4.5
+W011,"Python,Data Analysis,Machine Learning,Statistics",4,"Full-time","Nakuru",4.7
+W012,"Social Media Marketing,Content Marketing,SEO,Digital Marketing",2,"Part-time","Mombasa",4.0
+W013,"SQL,MySQL,Database Design,Database Management",5,"Full-time","Eldoret",4.8
+W014,"Administrative Support,Data Entry,Document Management,Virtual Assistance",1,"Part-time","Nairobi",3.9
+W015,"HTML,CSS,JavaScript,React,UI Design",3,"Full-time","Nairobi",4.4
+W016,"Online Teaching,Tutoring,Training,Communication",5,"Part-time","Kisumu",4.9
+W017,"AWS,Cloud Computing,Linux,DevOps,Docker",4,"Full-time","Nairobi",4.6
+W018,"Bookkeeping,Accounting,Financial Reporting,Excel",3,"Part-time","Kiambu",4.3
