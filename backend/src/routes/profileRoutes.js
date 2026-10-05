@@ -4,7 +4,9 @@ const { authenticate, authorize } = require('../middleware/authenticate')
 const {
   createWorkerProfile,
   getWorkerProfile,
-  updateWorkerProfile
+  updateWorkerProfile,
+  getClientProfile,
+  updateClientProfile
 } = require('../controllers/profileController')
 
 const router = express.Router()
@@ -16,6 +18,11 @@ router.post('/', authenticate, authorize('Worker'), createWorkerProfile)
 router.get('/mine', authenticate, authorize('Worker'), getWorkerProfile)
 
 router.put('/mine', authenticate, authorize('Worker'), updateWorkerProfile)
+
+// Client profiles are self-service resources and are always scoped to the
+// authenticated Client account.
+router.get('/client/mine', authenticate, authorize('Client'), getClientProfile)
+router.put('/client/mine', authenticate, authorize('Client'), updateClientProfile)
 
 router.get('/:userId', authenticate, authorize('Worker', 'Client', 'Administrator'), (req, res, next) => {
   if (req.user.role === 'Worker' && String(req.user.userId) !== req.params.userId) {

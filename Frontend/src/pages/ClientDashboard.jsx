@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 
 const API = 'http://localhost:5000/api'
 const emptyGig = { title: '', description: '', category: '', requiredSkills: '', location: '', budget: '', duration: '' }
+const emptyProfile = { organizationName: '', bio: '' }
 
 function ClientDashboard() {
   const navigate = useNavigate()
@@ -17,6 +18,14 @@ function ClientDashboard() {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [reviewDrafts, setReviewDrafts] = useState({})
+  const [clientProfile, setClientProfile] = useState(emptyProfile)
+  const [profileLoading, setProfileLoading] = useState(true)
+  const [profileSaving, setProfileSaving] = useState(false)
+  const [profileError, setProfileError] = useState('')
+  const [profileNotice, setProfileNotice] = useState('')
+  const [accountUser] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('user') || '{}') } catch { return {} }
+  })
 
   // Attach the session token centrally so client-only APIs receive the same
   // authentication header and response error handling.
@@ -39,10 +48,51 @@ function ClientDashboard() {
     } catch (err) { setError(err.message) } finally { setLoading(false) }
   }, [request])
 
+  const loadClientProfile = useCallback(async () => {
+    setProfileLoading(true)
+    setProfileError('')
+    try {
+      const data = await request('/profiles/client/mine')
+      setClientProfile({
+        organizationName: data.profile?.organization_name || '',
+        bio: data.profile?.bio || ''
+      })
+    } catch (err) {
+      setProfileError(err.message)
+    } finally {
+      setProfileLoading(false)
+    }
+  }, [request])
+
   useEffect(() => {
     const timer = window.setTimeout(loadGigs, 0)
     return () => window.clearTimeout(timer)
   }, [loadGigs])
+
+  useEffect(() => {
+    const timer = window.setTimeout(loadClientProfile, 0)
+    return () => window.clearTimeout(timer)
+  }, [loadClientProfile])
+
+  const saveClientProfile = async (event) => {
+    event.preventDefault()
+    setProfileSaving(true); setProfileError(''); setProfileNotice('')
+    try {
+      const data = await request('/profiles/client/mine', {
+        method: 'PUT',
+        body: JSON.stringify(clientProfile)
+      })
+      setClientProfile({
+        organizationName: data.profile?.organization_name || '',
+        bio: data.profile?.bio || ''
+      })
+      setProfileNotice('Profile saved successfully.')
+    } catch (err) {
+      setProfileError(err.message)
+    } finally {
+      setProfileSaving(false)
+    }
+  }
 
   const postGig = async (event) => {
     event.preventDefault()
@@ -102,6 +152,23 @@ function ClientDashboard() {
   return <div style={styles.page}>
     <header style={styles.header}><div><h1 style={{ margin: 0, color: 'white' }}>KaziForce</h1><span>Client dashboard</span></div><button style={styles.secondary} onClick={logout}>Log out</button></header>
     <main style={styles.main}>
+      <section style={styles.profileSection} aria-labelledby="client-profile-heading">
+        <h2 id="client-profile-heading" style={styles.heading}>Client profile</h2>
+        <p>{accountUser.fullName || accountUser.full_name || 'Signed-in client'}{accountUser.email ? ` · ${accountUser.email}` : ''}</p>
+        {profileLoading ? <p role="status">Loading client profile…</p> : <>
+          {profileError && <p role="alert" style={styles.error}>{profileError}</p>}
+          {profileNotice && <p role="status" style={styles.notice}>{profileNotice}</p>}
+          <form onSubmit={saveClientProfile} style={styles.form}>
+            <label style={styles.label}>Organization name
+              <input maxLength={150} style={styles.input} value={clientProfile.organizationName} onChange={(event) => setClientProfile({ ...clientProfile, organizationName: event.target.value })} />
+            </label>
+            <label style={{ ...styles.label, gridColumn: '1 / -1' }}>Organization bio
+              <textarea maxLength={5000} style={{ ...styles.input, minHeight: 90 }} value={clientProfile.bio} onChange={(event) => setClientProfile({ ...clientProfile, bio: event.target.value })} />
+            </label>
+            <button style={styles.primary} disabled={profileSaving}>{profileSaving ? 'Saving profile…' : 'Save profile'}</button>
+          </form>
+        </>}
+      </section>
       <h2 style={styles.heading}>Post a gig</h2>
       <form onSubmit={postGig} style={styles.form}>
         {field('title', 'Title', 'text', true)}{field('category', 'Category')}{field('requiredSkills', 'Required skills (comma-separated)')}
@@ -126,6 +193,7 @@ const styles = {
   page: { minHeight: '100vh', background: '#f5f7fa', color: '#172b4d', fontFamily: 'system-ui, sans-serif', colorScheme: 'light' },
   header: { background: '#123d35', color: 'white', padding: '18px max(24px, calc((100% - 1100px)/2))', display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
   main: { maxWidth: 1100, margin: '30px auto', padding: '0 20px', textAlign: 'left' },
+  profileSection: { marginBottom: 30 },
   heading: { color: '#172b4d', textAlign: 'left' },
   form: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14, padding: 20, background: 'white', borderRadius: 12, boxShadow: '0 2px 12px #102a4320' },
   label: { display: 'flex', flexDirection: 'column', gap: 6, fontWeight: 600, fontSize: 14 },

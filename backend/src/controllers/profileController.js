@@ -144,8 +144,58 @@ const updateWorkerProfile = async (req, res) => {
   }
 }
 
+// Client self-service exposes only the organization fields in client_profiles;
+// account identity always comes from the verified JWT, never the request body.
+const getClientProfile = async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT organization_name, bio, created_at, updated_at
+       FROM client_profiles
+       WHERE user_id = $1`,
+      [req.user.userId]
+    )
+
+    return res.json({ profile: result.rows[0] || null })
+  } catch (error) {
+    console.error('Get client profile error:', error)
+    return res.status(500).json({ message: 'Unable to retrieve client profile.' })
+  }
+}
+
+const updateClientProfile = async (req, res) => {
+  const { organizationName = '', bio = '' } = req.body || {}
+  if (typeof organizationName !== 'string' || organizationName.trim().length > 150) {
+    return res.status(400).json({ message: 'Organization name must be text with at most 150 characters.' })
+  }
+  if (typeof bio !== 'string' || bio.length > 5000) {
+    return res.status(400).json({ message: 'Bio must be text with at most 5000 characters.' })
+  }
+
+  try {
+    // Parameterized upsert creates the first profile and updates later edits
+    // while the unique user_id constraint guarantees one profile per client.
+    const result = await pool.query(
+      `INSERT INTO client_profiles (user_id, organization_name, bio)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (user_id) DO UPDATE SET
+         organization_name = EXCLUDED.organization_name,
+         bio = EXCLUDED.bio,
+         updated_at = CURRENT_TIMESTAMP
+       RETURNING organization_name, bio, created_at, updated_at`,
+      [req.user.userId, organizationName.trim() || null, bio.trim() || null]
+    )
+
+    return res.json({ message: 'Client profile saved successfully.', profile: result.rows[0] })
+  } catch (error) {
+    console.error('Update client profile error:', error)
+    return res.status(500).json({ message: 'Unable to save client profile.' })
+  }
+}
+
 module.exports = {
   createWorkerProfile,
   getWorkerProfile,
-  updateWorkerProfile
+  updateWorkerProfile,
+  getClientProfile,
+  updateClientProfile
 }
