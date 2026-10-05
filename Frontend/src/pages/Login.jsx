@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import './Login.css'
 
 function Login() {
@@ -72,7 +72,8 @@ function Login() {
         return
       }
 
-      // Store authentication information
+      // Keep the short-lived JWT and role for protected navigation; every
+      // backend request still verifies the token and account status.
       localStorage.setItem('token', data.token)
       localStorage.setItem('user', JSON.stringify(data.user))
 
@@ -168,27 +169,6 @@ function Login() {
 
             </div>
 
-            <div className="login-options">
-
-              <label className="remember-me">
-
-                <input type="checkbox" />
-
-                <span>
-                  Remember me
-                </span>
-
-              </label>
-
-              <button
-                type="button"
-                className="forgot-password"
-              >
-                Forgot password?
-              </button>
-
-            </div>
-
             <button
               type="submit"
               className="login-button"
@@ -198,20 +178,9 @@ function Login() {
 
           </form>
 
-          <div className="divider">
-            <span>or</span>
-          </div>
-
-          <button className="social-login">
-            Continue with Google
-          </button>
-
           <p className="register-link">
             Don't have an account?{' '}
-
-            <span>
-              Register here
-            </span>
+            <Link to="/register">Register here</Link>
           </p>
 
         </div>

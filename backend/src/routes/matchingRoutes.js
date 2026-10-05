@@ -1,4 +1,5 @@
 const express = require('express')
+const { authenticate, authorize } = require('../middleware/authenticate')
 
 const {
   getWorkerRecommendations,
@@ -7,6 +8,8 @@ const {
 
 const router = express.Router()
 
+// Restrict each recommendation direction to the role whose data it uses;
+// controllers additionally verify client ownership of the gig.
 
 // ---------------------------------------------------------
 // RECOMMEND WORKERS FOR A GIG
@@ -14,6 +17,8 @@ const router = express.Router()
 
 router.post(
   '/workers',
+  authenticate,
+  authorize('Client', 'Administrator'),
   getWorkerRecommendations
 )
 
@@ -24,6 +29,8 @@ router.post(
 
 router.post(
   '/gigs',
+  authenticate,
+  authorize('Worker'),
   getGigRecommendations
 )
 

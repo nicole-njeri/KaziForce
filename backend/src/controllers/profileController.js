@@ -3,18 +3,13 @@ const pool = require('../config/db')
 const createWorkerProfile = async (req, res) => {
   try {
     const {
-      userId,
       bio,
       experienceYears,
       education,
-      availability
+      availability,
+      skills = ''
     } = req.body
-
-    if (!userId) {
-      return res.status(400).json({
-        message: 'User ID is required.'
-      })
-    }
+    const userId = req.user.userId
 
     const userResult = await pool.query(
       `SELECT user_id, role
@@ -50,15 +45,16 @@ const createWorkerProfile = async (req, res) => {
 
     const result = await pool.query(
       `INSERT INTO worker_profiles
-       (user_id, bio, experience_years, education, availability)
-       VALUES ($1, $2, $3, $4, $5)
+       (user_id, bio, experience_years, education, availability, skills)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
       [
         userId,
         bio || null,
         experienceYears || null,
         education || null,
-        availability || null
+        availability || null,
+        skills
       ]
     )
 
@@ -78,7 +74,9 @@ const createWorkerProfile = async (req, res) => {
 
 const getWorkerProfile = async (req, res) => {
   try {
-    const { userId } = req.params
+    // The profile route supplies this ID from the authenticated session or
+    // has already applied its role-based ownership check.
+    const userId = req.user.userId
 
     const result = await pool.query(
       `SELECT
@@ -92,6 +90,7 @@ const getWorkerProfile = async (req, res) => {
         wp.experience_years,
         wp.education,
         wp.availability,
+        wp.skills,
         wp.created_at,
         wp.updated_at
        FROM worker_profiles wp
@@ -120,7 +119,33 @@ const getWorkerProfile = async (req, res) => {
   }
 }
 
+const updateWorkerProfile = async (req, res) => {
+  try {
+    const { bio = '', experienceYears = null, education = '', availability = '', skills = '' } = req.body
+    if (experienceYears !== null && (!Number.isInteger(Number(experienceYears)) || Number(experienceYears) < 0)) {
+      return res.status(400).json({ message: 'Experience must be a non-negative whole number.' })
+    }
+    // Use the authenticated user ID and upsert to support both first-time
+    // profile creation and later edits without duplicate profiles.
+    const result = await pool.query(
+      `INSERT INTO worker_profiles (user_id, bio, experience_years, education, availability, skills)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (user_id) DO UPDATE SET bio = EXCLUDED.bio,
+         experience_years = EXCLUDED.experience_years, education = EXCLUDED.education,
+         availability = EXCLUDED.availability, skills = EXCLUDED.skills,
+         updated_at = CURRENT_TIMESTAMP
+       RETURNING *`,
+      [req.user.userId, bio, experienceYears === null || experienceYears === '' ? null : Number(experienceYears), education, availability, skills]
+    )
+    return res.json({ message: 'Worker profile saved.', profile: result.rows[0] })
+  } catch (error) {
+    console.error('Update worker profile error:', error)
+    return res.status(500).json({ message: 'Unable to save worker profile.' })
+  }
+}
+
 module.exports = {
   createWorkerProfile,
-  getWorkerProfile
+  getWorkerProfile,
+  updateWorkerProfile
 }

@@ -17,10 +17,14 @@ function WorkerDashboard() {
   const [applying, setApplying] = useState(false)
   const [applicationMessage, setApplicationMessage] = useState('')
   const [applicationError, setApplicationError] = useState('')
+  const [applications, setApplications] = useState([])
+  const [profile, setProfile] = useState({ bio: '', experienceYears: '', education: '', availability: '', skills: '' })
+  const [profileSaved, setProfileSaved] = useState('')
 
 
   // -------------------------------------------------------
-  // LOAD RECOMMENDED GIGS AND GIG DETAILS
+  // Load the signed-in worker's recommendations and profile from protected
+  // APIs; never derive account identity from form or URL input.
   // -------------------------------------------------------
 
   useEffect(() => {
@@ -29,26 +33,7 @@ function WorkerDashboard() {
         setLoading(true)
         setError('')
 
-        const storedUser =
-          localStorage.getItem('user')
-
-        let workerId = 'W001'
-
-        if (storedUser) {
-          try {
-            const user = JSON.parse(storedUser)
-
-            workerId =
-              user.workerId ||
-              user.worker_id ||
-              'W001'
-
-          } catch (error) {
-            console.warn(
-              'Unable to read stored user information.'
-            )
-          }
-        }
+        const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` }
 
 
         // -----------------------------------------------
@@ -61,15 +46,8 @@ function WorkerDashboard() {
             {
               method: 'POST',
 
-              headers: {
-                'Content-Type':
-                  'application/json'
-              },
-
-              body: JSON.stringify({
-                workerId,
-                topN: 5
-              })
+              headers,
+              body: JSON.stringify({ topN: 5 })
             }
           )
 
@@ -102,7 +80,7 @@ function WorkerDashboard() {
 
         const gigsResponse =
           await fetch(
-            'http://localhost:5000/api/matching/gigs'
+            'http://localhost:5000/api/gigs'
           )
 
 
@@ -118,16 +96,27 @@ function WorkerDashboard() {
           )
         }
 
+        const applicationResponse = await fetch('http://localhost:5000/api/applications/worker/mine', { headers })
+        if (applicationResponse.ok) {
+          const applicationData = await applicationResponse.json()
+          setApplications(applicationData.applications || [])
+        }
+        const profileResponse = await fetch('http://localhost:5000/api/profiles/mine', { headers })
+        if (profileResponse.ok) {
+          const { profile: savedProfile } = await profileResponse.json()
+          setProfile({ bio: savedProfile.bio || '', experienceYears: savedProfile.experience_years ?? '', education: savedProfile.education || '', availability: savedProfile.availability || '', skills: savedProfile.skills || '' })
+        }
 
-      } catch (error) {
+
+          } catch (loadError) {
 
         console.error(
           'Dashboard error:',
-          error
+          loadError
         )
 
         setError(
-          error.message ||
+          loadError.message ||
           'Unable to load dashboard information.'
         )
 
@@ -215,6 +204,8 @@ function WorkerDashboard() {
     )
   }
 
+  const getSkillList = (skills) => Array.isArray(skills) ? skills : typeof skills === 'string' ? skills.split(',').map((skill) => skill.trim()).filter(Boolean) : []
+
 
   // -------------------------------------------------------
   // GET GIG DETAILS
@@ -280,7 +271,8 @@ function WorkerDashboard() {
 
 
   // -------------------------------------------------------
-  // APPLY FOR GIG
+  // Submit applications under the JWT identity and update local status
+  // immediately so the worker can see the new application without a reload.
   // -------------------------------------------------------
 
   const handleApply = async () => {
@@ -293,35 +285,8 @@ function WorkerDashboard() {
       setApplicationMessage('')
       setApplicationError('')
 
-      const storedUser =
-        localStorage.getItem('user')
-
-      let workerId = 'W001'
-
-      if (storedUser) {
-        try {
-          const user = JSON.parse(storedUser)
-
-          workerId =
-            user.workerId ||
-            user.worker_id ||
-            'W001'
-
-        } catch (error) {
-          console.warn(
-            'Unable to read stored user information.'
-          )
-        }
-      }
-
-      const gigId =
-        selectedGig.gig_id
-
-      if (!gigId) {
-        throw new Error(
-          'Unable to determine the gig ID.'
-        )
-      }
+      const token = localStorage.getItem('token')
+      if (!token) throw new Error('Please sign in again to apply.')
 
       const response =
         await fetch(
@@ -329,14 +294,10 @@ function WorkerDashboard() {
           {
             method: 'POST',
 
-            headers: {
-              'Content-Type':
-                'application/json'
-            },
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
 
             body: JSON.stringify({
-              workerId,
-              gigId,
+              gigId: selectedGig.gig_id,
               coverMessage:
                 `I am interested in this ${getGigTitle(
                   selectedGig
@@ -367,6 +328,10 @@ function WorkerDashboard() {
         data.message ||
         'Application submitted successfully.'
       )
+      setApplications((current) => [
+        data.application,
+        ...current.filter((item) => item.application_id !== data.application.application_id)
+      ])
 
     } catch (error) {
 
@@ -396,6 +361,32 @@ function WorkerDashboard() {
     setSelectedGig(null)
     setApplicationMessage('')
     setApplicationError('')
+  }
+
+  // Save profile changes first, then refresh recommendations using the new skills.
+  const saveProfile = async (event) => {
+    event.preventDefault()
+    setProfileSaved('')
+    try {
+      const response = await fetch('http://localhost:5000/api/profiles/mine', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
+        body: JSON.stringify(profile)
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.message || 'Unable to save profile.')
+      const matchResponse = await fetch('http://localhost:5000/api/matching/gigs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
+        body: JSON.stringify({ topN: 5 })
+      })
+      if (matchResponse.ok) {
+        const matchData = await matchResponse.json()
+        setRecommendations(matchData.recommendations || [])
+        setWorker(matchData.worker || null)
+      }
+      setProfileSaved('Profile saved. Recommendations will use your updated skills.')
+    } catch (err) { setProfileSaved(err.message) }
   }
 
 
@@ -655,11 +646,8 @@ function WorkerDashboard() {
 
               <div className="tag-list">
 
-                {(
-                  selectedGig.required_skills ||
-                  selectedGig.skills ||
-                  selectedGig.gig_tags?.skills ||
-                  []
+                {getSkillList(
+                  selectedGig.required_skills || selectedGig.skills || selectedGig.gig_tags?.skills
                 ).map(
                   (skill) => (
 
@@ -832,6 +820,30 @@ function WorkerDashboard() {
 
           <>
 
+            <section className="worker-summary">
+              <form onSubmit={saveProfile} style={{ width: '100%' }}>
+                <h2>My worker profile</h2>
+                <label>Skills (comma-separated)<input value={profile.skills} onChange={(event) => setProfile({ ...profile, skills: event.target.value })} /></label>
+                <label>Experience (years)<input type="number" min="0" value={profile.experienceYears} onChange={(event) => setProfile({ ...profile, experienceYears: event.target.value })} /></label>
+                <label>Education<input value={profile.education} onChange={(event) => setProfile({ ...profile, education: event.target.value })} /></label>
+                <label>Availability<input value={profile.availability} onChange={(event) => setProfile({ ...profile, availability: event.target.value })} /></label>
+                <label>About me<textarea value={profile.bio} onChange={(event) => setProfile({ ...profile, bio: event.target.value })} /></label>
+                <button type="submit" className="view-gig-button">Save profile</button>
+                {profileSaved && <p role="status">{profileSaved}</p>}
+              </form>
+            </section>
+
+            <section className="recommendations">
+              <div className="section-heading"><h2>My Applications</h2><span>{applications.length} submitted</span></div>
+              {applications.length === 0 ? <p>You have not applied to any gigs yet.</p> : applications.map((application) => {
+                const gig = allGigs.find((item) => String(item.gig_id) === String(application.gig_id))
+                return <article key={application.application_id} className="gig-card">
+                  <h3>{gig?.title || `Gig #${application.gig_id}`}</h3>
+                  <p>Applied {new Date(application.applied_at).toLocaleDateString()} · Status: <strong>{application.status}</strong></p>
+                </article>
+              })}
+            </section>
+
             <section className="welcome-section">
 
               <div>
@@ -904,7 +916,7 @@ function WorkerDashboard() {
                   </span>
 
                   <span className="summary-value">
-                    {worker.reputation}
+                    {Number(worker.reputation || 0).toFixed(1)}
                   </span>
 
                 </div>

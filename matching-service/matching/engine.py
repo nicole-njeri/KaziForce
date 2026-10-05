@@ -304,7 +304,8 @@ def score_single_worker_for_gig(
     )
 
     # -----------------------------------------------------
-    # Generate tags
+    # Derive structured skill, category, specialization,
+    # and location tags from both live records and CSV rows.
     # -----------------------------------------------------
 
     worker_tags = generate_worker_tags(

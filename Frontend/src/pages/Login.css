@@ -172,7 +172,7 @@
   font-size: 14px;
 }
 
-.register-link span {
+.register-link a {
   color: #16834b;
   font-weight: 600;
   cursor: pointer;

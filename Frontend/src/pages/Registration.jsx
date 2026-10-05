@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import './Registration.css'
 
 function Registration() {
@@ -77,6 +78,8 @@ function Registration() {
       return
     }
 
+    // Mirror the API's consent check so the user receives immediate feedback;
+    // the server also enforces consent for requests that bypass this form.
     if (!formData.termsAccepted) {
       setError('Please accept the terms and conditions.')
       return
@@ -96,7 +99,8 @@ function Registration() {
             phone: formData.phone,
             location: formData.location,
             password: formData.password,
-            role: selectedRole
+            role: selectedRole,
+            termsAccepted: formData.termsAccepted
           })
         }
       )
@@ -109,8 +113,6 @@ function Registration() {
       }
 
       setSuccess('Account created successfully!')
-
-      console.log('Registered user:', data.user)
 
       setFormData({
         fullName: '',
@@ -224,18 +226,6 @@ function Registration() {
                   <span className="role-icon">💼</span>
                   <strong>Client</strong>
                   <small>Post gigs and find workers</small>
-                </button>
-
-                <button
-                  type="button"
-                  className={`role-card ${
-                    selectedRole === 'Administrator' ? 'selected' : ''
-                  }`}
-                  onClick={() => setSelectedRole('Administrator')}
-                >
-                  <span className="role-icon">⚙️</span>
-                  <strong>Administrator</strong>
-                  <small>Manage the platform</small>
                 </button>
 
               </div>
@@ -359,14 +349,9 @@ function Registration() {
 
           </form>
 
-          <div className="social-section">
-            <p>Or continue with</p>
-
-            <div className="social-buttons">
-              <button type="button">Google</button>
-              <button type="button">Microsoft</button>
-            </div>
-          </div>
+          <p style={{ textAlign: 'center', marginTop: 20, color: '#666' }}>
+            Already have an account? <Link to="/login">Sign in</Link>
+          </p>
 
         </div>
       </div>

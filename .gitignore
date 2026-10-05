@@ -1,0 +1,11 @@
+node_modules/
+**/node_modules/
+dist/
+**/__pycache__/
+matching-service/.runtime-packages/
+*.py[cod]
+.env
+.env.*
+!.env.example
+backend/.env
+Frontend/.env

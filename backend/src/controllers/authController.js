@@ -10,25 +10,32 @@ const registerUser = async (req, res) => {
       phone,
       location,
       password,
-      role
-    } = req.body
+      role,
+      termsAccepted
+    } = req.body || {}
 
-    // Check required fields
-    if (
-      !fullName ||
-      !email ||
-      !phone ||
-      !location ||
-      !password ||
-      !role
-    ) {
+    if ([fullName, email, phone, location, password, role].some((value) => typeof value !== 'string' || !value.trim())) {
       return res.status(400).json({
         message: 'All required fields must be provided.'
       })
     }
 
-    // Check valid role
-    const validRoles = ['Worker', 'Client', 'Administrator']
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      return res.status(400).json({ message: 'Enter a valid email address.' })
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({ message: 'Password must be at least 8 characters long.' })
+    }
+
+    if (termsAccepted !== true) {
+      return res.status(400).json({ message: 'You must accept the terms and conditions.' })
+    }
+
+    // Administrator accounts are provisioned by the deployment owner, never
+    // through public registration, so an anonymous caller cannot grant
+    // themselves platform-wide privileges.
+    const validRoles = ['Worker', 'Client']
 
     if (!validRoles.includes(role)) {
       return res.status(400).json({
@@ -37,9 +44,11 @@ const registerUser = async (req, res) => {
     }
 
     // Check if email already exists
+    const normalizedEmail = email.trim().toLowerCase()
+    const normalizedPhone = phone.trim()
     const existingEmail = await pool.query(
-      'SELECT user_id FROM users WHERE email = $1',
-      [email]
+      'SELECT user_id FROM users WHERE LOWER(email) = $1',
+      [normalizedEmail]
     )
 
     if (existingEmail.rows.length > 0) {
@@ -51,7 +60,7 @@ const registerUser = async (req, res) => {
     // Check if phone already exists
     const existingPhone = await pool.query(
       'SELECT user_id FROM users WHERE phone = $1',
-      [phone]
+      [normalizedPhone]
     )
 
     if (existingPhone.rows.length > 0) {
@@ -60,7 +69,8 @@ const registerUser = async (req, res) => {
       })
     }
 
-    // Hash password
+    // Store only a one-way bcrypt hash; the returned registration record
+    // deliberately excludes this field.
     const passwordHash = await bcrypt.hash(password, 10)
 
     // Save user
@@ -70,10 +80,10 @@ const registerUser = async (req, res) => {
       VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING user_id, full_name, email, phone, location, role, created_at`,
       [
-        fullName,
-        email,
-        phone,
-        location,
+        fullName.trim(),
+        normalizedEmail,
+        normalizedPhone,
+        location.trim(),
         passwordHash,
         role
       ]
@@ -94,9 +104,9 @@ const registerUser = async (req, res) => {
 }
 const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body
+    const { email, password } = req.body || {}
 
-    if (!email || !password) {
+    if (typeof email !== 'string' || !email.trim() || typeof password !== 'string' || !password) {
       return res.status(400).json({
         message: 'Email and password are required.'
       })
@@ -109,11 +119,12 @@ const loginUser = async (req, res) => {
         email,
         phone,
         location,
+        is_active,
         password_hash,
         role
        FROM users
-       WHERE email = $1`,
-      [email]
+      WHERE LOWER(email) = LOWER($1)`,
+      [typeof email === 'string' ? email.trim() : '']
     )
 
     if (result.rows.length === 0) {
@@ -123,6 +134,14 @@ const loginUser = async (req, res) => {
     }
 
     const user = result.rows[0]
+
+    // A suspended user must not receive a fresh token, even if the password
+    // is correct; middleware also rechecks activity on existing tokens.
+    if (user.is_active === false) {
+      return res.status(401).json({
+        message: 'Invalid email or password.'
+      })
+    }
 
     const passwordMatch = await bcrypt.compare(
       password,

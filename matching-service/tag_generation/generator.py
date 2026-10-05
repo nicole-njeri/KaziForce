@@ -272,7 +272,9 @@ def generate_tags(skills, location):
 
 def get_tag_relationship(tag):
     """
-    Retrieve relationship information for a tag.
+    Retrieve a tag's configured parent/related metadata.
+    The helper is available to downstream consumers; the
+    current scoring pipeline does not weight these edges.
     """
 
     relationships = load_tag_relationships().get(

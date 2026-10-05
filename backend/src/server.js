@@ -8,14 +8,28 @@ const authRoutes = require('./routes/authRoutes')
 const profileRoutes = require('./routes/profileRoutes')
 const matchingRoutes = require('./routes/matchingRoutes')
 const applicationRoutes = require('./routes/applicationRoutes')
+const gigRoutes = require('./routes/gigRoutes')
+const adminRoutes = require('./routes/adminRoutes')
 
 const app = express()
 
 const PORT =
   process.env.PORT || 5000
 
+
+// -------------------------------------------------------
+// MIDDLEWARE
+// -------------------------------------------------------
+
+// CORS is open for local development; production deployment must restrict
+// origins to the hosted frontend.
 app.use(cors())
 app.use(express.json())
+
+
+// -------------------------------------------------------
+// ROOT ROUTE
+// -------------------------------------------------------
 
 app.get('/', (req, res) => {
   res.json({
@@ -23,6 +37,11 @@ app.get('/', (req, res) => {
       'KaziForce backend is running'
   })
 })
+
+
+// -------------------------------------------------------
+// API ROUTES
+// -------------------------------------------------------
 
 app.use(
   '/api/auth',
@@ -44,10 +63,23 @@ app.use(
   applicationRoutes
 )
 
+app.use(
+  '/api/gigs',
+  gigRoutes
+)
+
+app.use('/api/admin', adminRoutes)
+
+
+// -------------------------------------------------------
+// Lightweight database health endpoint used during local setup and demos.
+// -------------------------------------------------------
+
 app.get(
   '/api/test-db',
   async (req, res) => {
     try {
+
       const result =
         await pool.query(
           'SELECT NOW()'
@@ -59,7 +91,9 @@ app.get(
         time:
           result.rows[0].now
       })
+
     } catch (error) {
+
       console.error(
         'Database test error:',
         error
@@ -72,6 +106,11 @@ app.get(
     }
   }
 )
+
+
+// -------------------------------------------------------
+// START SERVER
+// -------------------------------------------------------
 
 app.listen(
   PORT,

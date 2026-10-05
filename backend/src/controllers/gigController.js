@@ -1,0 +1,304 @@
+const pool = require('../config/db')
+
+
+// CREATE GIG
+const createGig = async (req, res) => {
+  try {
+    const {
+      title,
+      description,
+      category = '',
+      requiredSkills = '',
+      location = '',
+      budget = '',
+      duration = ''
+    } = req.body
+
+    if (typeof title !== 'string' || !title.trim()) {
+      return res.status(400).json({
+        message: 'title is required'
+      })
+    }
+
+    if (typeof description !== 'string' || !description.trim()) {
+      return res.status(400).json({
+        message: 'description is required'
+      })
+    }
+
+    const numericBudget = budget === '' || budget == null ? null : Number(budget)
+    if (numericBudget !== null && (!Number.isFinite(numericBudget) || numericBudget < 0)) {
+      return res.status(400).json({ message: 'budget must be a non-negative number.' })
+    }
+
+    // Bind ownership to the verified client identity rather than accepting a
+    // client_id from request data.
+    const result =
+      await pool.query(
+        `
+        INSERT INTO gigs (
+          client_id,
+          title,
+          description,
+          category,
+          required_skills,
+          location,
+          budget,
+          duration
+        )
+        VALUES (
+          $1,
+          $2,
+          $3,
+          $4,
+          $5,
+          $6,
+          $7,
+          $8
+        )
+        RETURNING
+          gig_id,
+          client_id,
+          title,
+          description,
+          category,
+          required_skills,
+          location,
+          budget,
+          duration,
+          status,
+          created_at,
+          updated_at
+        `,
+        [
+          req.user.userId,
+          title.trim(),
+          description.trim(),
+          category,
+          requiredSkills,
+          location,
+          numericBudget,
+          duration
+        ]
+      )
+
+    return res.status(201).json({
+      message:
+        'Gig posted successfully.',
+      gig:
+        result.rows[0]
+    })
+
+  } catch (error) {
+
+    console.error(
+      'Create gig error:',
+      error
+    )
+
+    return res.status(500).json({
+      message:
+        'Unable to post gig.'
+    })
+  }
+}
+
+
+// GET ALL GIGS
+const getAllGigs = async (
+  req,
+  res
+) => {
+  try {
+
+    // The worker-facing feed contains only gigs that are still open.
+    const result =
+      await pool.query(
+        `
+        SELECT
+          gig_id,
+          client_id,
+          title,
+          description,
+          category,
+          required_skills,
+          location,
+          budget,
+          duration,
+          status,
+          created_at,
+          updated_at
+        FROM gigs
+        WHERE status = 'Open'
+        ORDER BY created_at DESC
+        `
+      )
+
+    return res.json({
+      gigs:
+        result.rows
+    })
+
+  } catch (error) {
+
+    console.error(
+      'Get gigs error:',
+      error
+    )
+
+    return res.status(500).json({
+      message:
+        'Unable to retrieve gigs.'
+    })
+  }
+}
+
+
+// GET SINGLE GIG
+const getGigById = async (
+  req,
+  res
+) => {
+  try {
+
+    const {
+      gigId
+    } = req.params
+
+    const result =
+      await pool.query(
+        `
+        SELECT
+          gig_id,
+          client_id,
+          title,
+          description,
+          category,
+          required_skills,
+          location,
+          budget,
+          duration,
+          status,
+          created_at,
+          updated_at
+        FROM gigs
+        WHERE gig_id = $1
+        `,
+        [gigId]
+      )
+
+    if (
+      result.rows.length === 0
+    ) {
+      return res.status(404).json({
+        message:
+          'Gig not found.'
+      })
+    }
+
+    return res.json({
+      gig:
+        result.rows[0]
+    })
+
+  } catch (error) {
+
+    console.error(
+      'Get gig error:',
+      error
+    )
+
+    return res.status(500).json({
+      message:
+        'Unable to retrieve gig.'
+    })
+  }
+}
+
+
+// GET CLIENT GIGS
+const getClientGigs = async (
+  req,
+  res
+) => {
+  try {
+
+    // Scope the dashboard list to the client ID in the verified session.
+    const clientId = req.user.userId
+
+    const result =
+      await pool.query(
+        `
+        SELECT
+          gig_id,
+          client_id,
+          title,
+          description,
+          category,
+          required_skills,
+          location,
+          budget,
+          duration,
+          status,
+          created_at,
+          updated_at,
+          (SELECT COUNT(*)::int FROM applications a WHERE a.gig_id = gigs.gig_id) AS application_count
+        FROM gigs
+        WHERE client_id = $1
+        ORDER BY created_at DESC
+        `,
+        [clientId]
+      )
+
+    return res.json({
+      client_id: clientId,
+      gigs:
+        result.rows
+    })
+
+  } catch (error) {
+
+    console.error(
+      'Get client gigs error:',
+      error
+    )
+
+    return res.status(500).json({
+      message:
+        'Unable to retrieve client gigs.'
+    })
+  }
+}
+
+const updateClientGig = async (req, res) => {
+  try {
+    const { gigId } = req.params
+    const { status } = req.body
+    if (!['Open', 'Closed', 'In Progress', 'Completed'].includes(status)) {
+      return res.status(400).json({ message: 'Choose a valid gig status.' })
+    }
+    // Restrict status changes to the gig's owner and accept only supported
+    // workflow states.
+    const result = await pool.query(
+      `UPDATE gigs SET status = $1, updated_at = CURRENT_TIMESTAMP
+       WHERE gig_id = $2 AND client_id = $3
+       RETURNING gig_id, client_id, title, description, category, required_skills,
+                 location, budget, duration, status, created_at, updated_at`,
+      [status, gigId, req.user.userId]
+    )
+    if (!result.rowCount) return res.status(404).json({ message: 'Gig not found.' })
+    return res.json({ message: 'Gig updated.', gig: result.rows[0] })
+  } catch (error) {
+    console.error('Update gig error:', error)
+    return res.status(500).json({ message: 'Unable to update gig.' })
+  }
+}
+
+
+module.exports = {
+  createGig,
+  getAllGigs,
+  getGigById,
+  getClientGigs,
+  updateClientGig
+}

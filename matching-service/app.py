@@ -108,18 +108,15 @@ def match_workers():
             "error": "top_n must be greater than 0"
         }), 400
 
-    # -----------------------------------------------------
-    # Load data
-    # -----------------------------------------------------
-
-    workers = load_workers()
-
-    gigs = load_gigs()
-
-    gig = find_gig(
-        gig_id,
-        gigs
-    )
+    # Database-backed callers provide the current gig and worker records.
+    # The original CSV path remains unchanged for the predefined test cases.
+    if data.get("gig") and isinstance(data.get("workers"), list):
+        gig = data["gig"]
+        workers = data["workers"]
+    else:
+        workers = load_workers()
+        gigs = load_gigs()
+        gig = find_gig(gig_id, gigs)
 
     if gig is None:
 
@@ -224,21 +221,13 @@ def match_gigs():
     # Load data
     # -----------------------------------------------------
 
-    workers = load_workers()
-
-    gigs = load_gigs()
-
-    worker = None
-
-    for current_worker in workers:
-
-        if current_worker.get(
-            "worker_id"
-        ) == worker_id:
-
-            worker = current_worker
-
-            break
+    if data.get("worker") and isinstance(data.get("gigs"), list):
+        worker = data["worker"]
+        gigs = data["gigs"]
+    else:
+        workers = load_workers()
+        gigs = load_gigs()
+        worker = next((current for current in workers if str(current.get("worker_id")) == str(worker_id)), None)
 
     if worker is None:
 
