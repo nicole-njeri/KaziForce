@@ -200,12 +200,7 @@
 .panel-copy { margin: 0; color: #778595; font-size: 11px; line-height: 1.55; }
 .profile-toggle { width: 100%; margin-top: 12px; }
 .side-panel .tag-list { margin-top: 13px; }
-.profile-editor { display: grid; gap: 10px; margin-top: 15px; padding-top: 14px; border-top: 1px solid #edf1ef; }
-.profile-editor label { display: grid; gap: 5px; color: #526579; font-size: 10px; font-weight: 650; }
-.profile-editor input, .profile-editor textarea { width: 100%; min-height: 35px; padding: 8px 9px; border: 1px solid #dfe7e3; border-radius: 6px; outline: none; background: #fcfdfc; color: var(--wf-ink); font-size: 11px; }
-.profile-editor textarea { resize: vertical; }
-.profile-editor input:focus, .profile-editor textarea:focus, .dashboard-search:focus-within { border-color: #77b898; box-shadow: 0 0 0 3px rgba(14, 142, 89, .08); }
-.profile-feedback { margin: 0; color: var(--wf-green-dark); font-size: 11px; line-height: 1.45; }
+.dashboard-search:focus-within { border-color: #77b898; box-shadow: 0 0 0 3px rgba(14, 142, 89, .08); }
 .application-list { display: grid; margin-top: 7px; }
 .application-row { min-width: 0; display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; align-items: center; gap: 8px; padding: 10px 0; border-top: 1px solid #edf1ef; }
 .application-mark { width: 32px; height: 32px; border-radius: 8px; font-size: 13px; }

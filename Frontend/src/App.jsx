@@ -4,6 +4,7 @@ import Registration from './pages/Registration'
 import Login from './pages/Login'
 
 import WorkerDashboard from './pages/WorkerDashboard'
+import WorkerProfile from './pages/WorkerProfile'
 import ClientDashboard from './pages/ClientDashboard'
 import AdminDashboard from './pages/AdminDashboard'
 
@@ -31,6 +32,23 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['Worker']}>
               <WorkerDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/worker/profile"
+          element={
+            <ProtectedRoute allowedRoles={['Worker']}>
+              <WorkerProfile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/worker/profile/edit"
+          element={
+            <ProtectedRoute allowedRoles={['Worker']}>
+              <WorkerProfile editing />
             </ProtectedRoute>
           }
         />

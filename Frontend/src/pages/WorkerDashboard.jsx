@@ -19,11 +19,9 @@ function WorkerDashboard() {
   const [applicationError, setApplicationError] = useState('')
   const [applications, setApplications] = useState([])
   const [profile, setProfile] = useState({ bio: '', experienceYears: '', education: '', availability: '', skills: '' })
-  const [profileSaved, setProfileSaved] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [activeSection, setActiveSection] = useState('dashboard')
   const [showAllApplications, setShowAllApplications] = useState(false)
-  const [showProfileEditor, setShowProfileEditor] = useState(false)
   const [accountUser] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('user') || '{}')
@@ -374,33 +372,6 @@ function WorkerDashboard() {
     setApplicationError('')
   }
 
-  // Save profile changes first, then refresh recommendations using the new skills.
-  const saveProfile = async (event) => {
-    event.preventDefault()
-    setProfileSaved('')
-    try {
-      const response = await fetch('http://localhost:5000/api/profiles/mine', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
-        body: JSON.stringify(profile)
-      })
-      const data = await response.json()
-      if (!response.ok) throw new Error(data.message || 'Unable to save profile.')
-      const matchResponse = await fetch('http://localhost:5000/api/matching/gigs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
-        body: JSON.stringify({ topN: 5 })
-      })
-      if (matchResponse.ok) {
-        const matchData = await matchResponse.json()
-        setRecommendations(matchData.recommendations || [])
-        setWorker(matchData.worker || null)
-      }
-      setProfileSaved('Profile saved. Recommendations will use your updated skills.')
-    } catch (err) { setProfileSaved(err.message) }
-  }
-
-
   // -------------------------------------------------------
   // LOGOUT
   // -------------------------------------------------------
@@ -476,14 +447,14 @@ function WorkerDashboard() {
           <a className={`sidebar-link ${activeSection === 'dashboard' ? 'active' : ''}`} href="#dashboard-top" onClick={() => setActiveSection('dashboard')}><span aria-hidden="true">⌂</span>Dashboard</a>
           <a className={`sidebar-link ${activeSection === 'gigs' ? 'active' : ''}`} href="#recommendations" onClick={() => setActiveSection('gigs')}><span aria-hidden="true">⌕</span>Find gigs</a>
           <a className={`sidebar-link ${activeSection === 'applications' ? 'active' : ''}`} href="#applications" onClick={() => setActiveSection('applications')}><span aria-hidden="true">▤</span>My applications</a>
-          <a className={`sidebar-link ${activeSection === 'profile' ? 'active' : ''}`} href="#profile" onClick={() => setActiveSection('profile')}><span aria-hidden="true">◯</span>My profile</a>
+          <button className="sidebar-link" type="button" onClick={() => navigate('/worker/profile')}><span aria-hidden="true">◯</span>My profile</button>
         </nav>
 
         <div className="sidebar-prompt">
           <span className="prompt-kicker">YOUR NEXT STEP</span>
           <strong>Keep your skills up to date.</strong>
           <p>A complete profile helps the matching engine find relevant gigs.</p>
-          <button type="button" className="text-action" onClick={() => { setShowProfileEditor(true); setActiveSection('profile'); document.getElementById('profile')?.scrollIntoView({ behavior: 'smooth' }) }}>Update profile <span aria-hidden="true">→</span></button>
+          <button type="button" className="text-action" onClick={() => navigate('/worker/profile/edit')}>Update profile <span aria-hidden="true">→</span></button>
         </div>
 
         <button type="button" className="sidebar-logout" onClick={handleLogout}><span aria-hidden="true">↪</span>Log out</button>
@@ -581,7 +552,7 @@ function WorkerDashboard() {
                   {loading && <div className="status-message" role="status"><span className="loading-spinner" /><p>Finding gigs that match your skills…</p></div>}
                   {!loading && error && <div className="status-message error-message" role="alert"><h2>Unable to load recommendations</h2><p>{error}</p></div>}
                   {!loading && !error && recommendations.length > 0 && filteredRecommendations.length === 0 && <div className="status-message"><h2>No gigs match that search</h2><p>Try a different title, category or skill.</p></div>}
-                  {!loading && !error && recommendations.length === 0 && <div className="status-message"><h2>No matching gigs yet</h2><p>Update your skills to help us find relevant opportunities.</p><button type="button" className="text-action" onClick={() => { setShowProfileEditor(true); document.getElementById('profile')?.scrollIntoView({ behavior: 'smooth' }) }}>Review your profile →</button></div>}
+                  {!loading && !error && recommendations.length === 0 && <div className="status-message"><h2>No matching gigs yet</h2><p>Update your skills to help us find relevant opportunities.</p><button type="button" className="text-action" onClick={() => navigate('/worker/profile')}>Review your profile →</button></div>}
 
                   {!loading && !error && filteredRecommendations.length > 0 && <div className="gig-list">
                     {filteredRecommendations.map((recommendation) => {
@@ -622,20 +593,11 @@ function WorkerDashboard() {
                     <div className="panel-heading"><div><p className="eyebrow">YOUR PROFILE</p><h2 id="profile-title">Profile completion</h2></div><strong className="completion-value">{profileCompletion}%</strong></div>
                     <div className="completion-track" role="progressbar" aria-label="Profile completion" aria-valuemin="0" aria-valuemax="100" aria-valuenow={profileCompletion}><span style={{ width: `${profileCompletion}%` }} /></div>
                     <p className="panel-copy">{profileCompletion === 100 ? 'Your profile is ready to support better matches.' : 'Add the missing details below to help clients understand your experience.'}</p>
-                    <button type="button" className="primary-action profile-toggle" onClick={() => setShowProfileEditor((visible) => !visible)}>{showProfileEditor ? 'Close profile editor' : profileCompletion === 100 ? 'Edit profile' : 'Complete profile'}</button>
-                    {showProfileEditor && <form className="profile-editor" onSubmit={saveProfile}>
-                      <label>Skills <input value={profile.skills} onChange={(event) => setProfile({ ...profile, skills: event.target.value })} placeholder="e.g. Carpentry, React" /></label>
-                      <label>Experience (years) <input type="number" min="0" value={profile.experienceYears} onChange={(event) => setProfile({ ...profile, experienceYears: event.target.value })} /></label>
-                      <label>Education <input value={profile.education} onChange={(event) => setProfile({ ...profile, education: event.target.value })} /></label>
-                      <label>Availability <input value={profile.availability} onChange={(event) => setProfile({ ...profile, availability: event.target.value })} /></label>
-                      <label>About you <textarea value={profile.bio} onChange={(event) => setProfile({ ...profile, bio: event.target.value })} rows="3" /></label>
-                      <button type="submit" className="primary-action">Save profile</button>
-                      {profileSaved && <p className="profile-feedback" role="status">{profileSaved}</p>}
-                    </form>}
+                    <button type="button" className="primary-action profile-toggle" onClick={() => navigate('/worker/profile')}>View profile</button>
                   </section>
 
                   <section className="side-panel" aria-labelledby="skills-title">
-                    <div className="panel-heading"><div><p className="eyebrow">WHAT YOU DO</p><h2 id="skills-title">Your skills</h2></div><button type="button" className="text-action" onClick={() => { setShowProfileEditor(true); setActiveSection('profile'); document.getElementById('profile')?.scrollIntoView({ behavior: 'smooth' }) }}>Edit</button></div>
+                    <div className="panel-heading"><div><p className="eyebrow">WHAT YOU DO</p><h2 id="skills-title">Your skills</h2></div><button type="button" className="text-action" onClick={() => navigate('/worker/profile/edit')}>Edit</button></div>
                     {getSkillList(profile.skills).length > 0
                       ? <div className="tag-list">{getSkillList(profile.skills).slice(0, 8).map((skill, index) => <span className="tag" key={`${skill}-${index}`}>{skill}</span>)}</div>
                       : <p className="panel-copy">Add your skills to improve your recommendations.</p>}
