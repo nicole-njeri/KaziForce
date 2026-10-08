@@ -20,6 +20,17 @@ function WorkerDashboard() {
   const [applications, setApplications] = useState([])
   const [profile, setProfile] = useState({ bio: '', experienceYears: '', education: '', availability: '', skills: '' })
   const [profileSaved, setProfileSaved] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [activeSection, setActiveSection] = useState('dashboard')
+  const [showAllApplications, setShowAllApplications] = useState(false)
+  const [showProfileEditor, setShowProfileEditor] = useState(false)
+  const [accountUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('user') || '{}')
+    } catch {
+      return {}
+    }
+  })
 
 
   // -------------------------------------------------------
@@ -275,9 +286,9 @@ function WorkerDashboard() {
   // immediately so the worker can see the new application without a reload.
   // -------------------------------------------------------
 
-  const handleApply = async () => {
+  const handleApply = async (gig = selectedGig) => {
     try {
-      if (!selectedGig) {
+      if (!gig) {
         return
       }
 
@@ -297,10 +308,10 @@ function WorkerDashboard() {
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
 
             body: JSON.stringify({
-              gigId: selectedGig.gig_id,
+              gigId: gig.gig_id,
               coverMessage:
                 `I am interested in this ${getGigTitle(
-                  selectedGig
+                  gig
                 )} opportunity.`
             })
           }
@@ -409,797 +420,246 @@ function WorkerDashboard() {
 
 
   // -------------------------------------------------------
-  // RENDER
-  // -------------------------------------------------------
+  const profileCompletionFields = [
+    profile.skills,
+    profile.bio,
+    profile.education,
+    profile.availability,
+    profile.experienceYears !== '' && profile.experienceYears !== null && profile.experienceYears !== undefined
+  ]
+  const profileCompletion = Math.round(
+    (profileCompletionFields.filter(Boolean).length / profileCompletionFields.length) * 100
+  )
+  const workerName = accountUser.full_name || accountUser.fullName || 'there'
+  const firstName = workerName.split(' ')[0]
+  const hour = new Date().getHours()
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
+  const filteredRecommendations = recommendations.filter((gig) => {
+    const fullGig = getFullGig(gig)
+    const query = searchQuery.trim().toLowerCase()
+    if (!query) return true
+    return [
+      getGigTitle(fullGig),
+      fullGig.category,
+      fullGig.location,
+      fullGig.gig_location,
+      fullGig.required_skills
+    ].some((value) => String(value || '').toLowerCase().includes(query))
+  })
+  const formatBudget = (value) => {
+    if (value === null || value === undefined || value === '' || !Number.isFinite(Number(value))) return null
+    return new Intl.NumberFormat('en-KE', {
+      style: 'currency', currency: 'KES', maximumFractionDigits: 0
+    }).format(Number(value))
+  }
+  const visibleApplications = showAllApplications ? applications : applications.slice(0, 3)
+  const rating = Number(worker?.reputation || 0)
+  const summaryItems = [
+    { label: 'Recommended gigs', value: recommendations.length, detail: 'Open opportunities matched to you', tone: 'green' },
+    { label: 'Applications', value: applications.length, detail: 'Applications you have submitted', tone: 'blue' },
+    { label: 'Profile complete', value: `${profileCompletion}%`, detail: 'Based on your saved profile details', tone: 'sand' },
+    rating > 0
+      ? { label: 'Average rating', value: `${rating.toFixed(1)} / 5`, detail: 'From client reviews', tone: 'violet' }
+      : { label: 'Experience', value: `${worker?.experience_years ?? profile.experienceYears ?? 0} yrs`, detail: 'Experience on your profile', tone: 'violet' }
+  ]
 
   return (
-
     <div className="worker-dashboard">
+      <aside className="dashboard-sidebar">
+        <a className="brand-section" href="#dashboard-top" onClick={() => setActiveSection('dashboard')}>
+          <span className="brand-mark" aria-hidden="true">K</span>
+          <span className="brand-copy"><strong>Kazi<span>Force</span></strong><small>Skills. People. Opportunities.</small></span>
+        </a>
 
-      {/* =================================================
-          HEADER
-      ================================================== */}
+        <p className="sidebar-label">WORKSPACE</p>
+        <nav className="sidebar-nav" aria-label="Worker dashboard navigation">
+          <a className={`sidebar-link ${activeSection === 'dashboard' ? 'active' : ''}`} href="#dashboard-top" onClick={() => setActiveSection('dashboard')}><span aria-hidden="true">⌂</span>Dashboard</a>
+          <a className={`sidebar-link ${activeSection === 'gigs' ? 'active' : ''}`} href="#recommendations" onClick={() => setActiveSection('gigs')}><span aria-hidden="true">⌕</span>Find gigs</a>
+          <a className={`sidebar-link ${activeSection === 'applications' ? 'active' : ''}`} href="#applications" onClick={() => setActiveSection('applications')}><span aria-hidden="true">▤</span>My applications</a>
+          <a className={`sidebar-link ${activeSection === 'profile' ? 'active' : ''}`} href="#profile" onClick={() => setActiveSection('profile')}><span aria-hidden="true">◯</span>My profile</a>
+        </nav>
 
-      <header className="dashboard-header">
-
-        <div className="brand-section">
-
-          <h1>
-            KaziForce
-          </h1>
-
-          <p>
-            Worker Dashboard
-          </p>
-
+        <div className="sidebar-prompt">
+          <span className="prompt-kicker">YOUR NEXT STEP</span>
+          <strong>Keep your skills up to date.</strong>
+          <p>A complete profile helps the matching engine find relevant gigs.</p>
+          <button type="button" className="text-action" onClick={() => { setShowProfileEditor(true); setActiveSection('profile'); document.getElementById('profile')?.scrollIntoView({ behavior: 'smooth' }) }}>Update profile <span aria-hidden="true">→</span></button>
         </div>
 
+        <button type="button" className="sidebar-logout" onClick={handleLogout}><span aria-hidden="true">↪</span>Log out</button>
+      </aside>
 
-        <button
-          className="logout-button"
-          onClick={handleLogout}
-        >
-          Logout
-        </button>
+      <div className="dashboard-shell">
+        <header className="dashboard-topbar">
+          <label className="dashboard-search">
+            <span aria-hidden="true">⌕</span>
+            <input
+              type="search"
+              aria-label="Search recommended gigs"
+              placeholder="Search gigs by title, category or skill"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+            />
+            {searchQuery && <button type="button" aria-label="Clear search" onClick={() => setSearchQuery('')}>×</button>}
+          </label>
+          <div className="account-summary">
+            <span className="account-avatar" aria-hidden="true">{workerName.charAt(0).toUpperCase()}</span>
+            <span><strong>{workerName}</strong><small>Worker</small></span>
+          </div>
+        </header>
 
-      </header>
-
-
-      {/* =================================================
-          MAIN CONTENT
-      ================================================== */}
-
-      <main className="dashboard-content">
-
-
-        {/* =================================================
-            GIG DETAILS
-        ================================================== */}
-
-        {selectedGig && (
-
-          <section className="gig-details-panel">
-
-            <button
-              className="back-button"
-              onClick={closeGigDetails}
-            >
-              ← Back to Recommendations
-            </button>
-
-
-            <div className="details-header">
-
-              <div>
-
-                <span className="gig-id">
-                  {selectedGig.gig_id}
-                </span>
-
-                <h2>
-                  {getGigTitle(
-                    selectedGig
-                  )}
-                </h2>
-
-              </div>
-
-
-              {selectedGig.recommendation && (
-
-                <div
-                  className={`details-match-score ${getMatchClass(
-                    selectedGig
-                      .recommendation
-                      .match_strength
-                  )}`}
-                >
-
-                  <strong>
-                    {
-                      selectedGig
-                        .recommendation
-                        .score
-                    }%
-                  </strong>
-
-                  <span>
-                    {
-                      selectedGig
-                        .recommendation
-                        .match_strength
-                    }
-                  </span>
-
+        <main className="dashboard-content" id="dashboard-top">
+          {selectedGig ? (
+            <section className="gig-details-panel" aria-labelledby="gig-detail-title">
+              <button type="button" className="back-button" onClick={closeGigDetails}>← Back to recommendations</button>
+              <div className="details-header">
+                <div>
+                  <p className="eyebrow">GIG DETAILS</p>
+                  <h1 id="gig-detail-title">{getGigTitle(selectedGig)}</h1>
+                  <p className="detail-subtitle">{getGigValue(selectedGig, ['location', 'gig_location'], 'Location not specified')}</p>
                 </div>
-
-              )}
-
-            </div>
-
-
-            <div className="details-grid">
-
-
-              {/* LOCATION */}
-
-              <div className="details-item">
-
-                <span>
-                  Location
-                </span>
-
-                <strong>
-                  {getGigValue(
-                    selectedGig,
-                    [
-                      'location',
-                      'gig_location'
-                    ],
-                    'Not specified'
-                  )}
-                </strong>
-
+                {selectedGig.recommendation && <div className={`details-match-score ${getMatchClass(selectedGig.recommendation.match_strength)}`}><strong>{selectedGig.recommendation.score}%</strong><span>match</span></div>}
               </div>
 
-
-              {/* CATEGORY */}
-
-              <div className="details-item">
-
-                <span>
-                  Category
-                </span>
-
-                <strong>
-                  {getGigValue(
-                    selectedGig,
-                    [
-                      'category'
-                    ],
-                    'Technology'
-                  )}
-                </strong>
-
+              <div className="details-grid">
+                {[
+                  ['Category', getGigValue(selectedGig, ['category'], 'Not specified')],
+                  ['Budget', formatBudget(getGigValue(selectedGig, ['budget', 'pay', 'payment'], null)) || 'Not specified'],
+                  ['Duration', getGigValue(selectedGig, ['duration', 'deadline'], 'Not specified')],
+                  ['Location', getGigValue(selectedGig, ['location', 'gig_location'], 'Not specified')]
+                ].map(([label, value]) => <div className="details-item" key={label}><span>{label}</span><strong>{value}</strong></div>)}
               </div>
 
-
-              {/* BUDGET */}
-
-              <div className="details-item">
-
-                <span>
-                  Budget
-                </span>
-
-                <strong>
-                  {getGigValue(
-                    selectedGig,
-                    [
-                      'budget',
-                      'pay',
-                      'payment'
-                    ],
-                    'Not specified'
-                  )}
-                </strong>
-
-              </div>
-
-
-              {/* DURATION */}
-
-              <div className="details-item">
-
-                <span>
-                  Duration
-                </span>
-
-                <strong>
-                  {getGigValue(
-                    selectedGig,
-                    [
-                      'duration',
-                      'deadline'
-                    ],
-                    'Not specified'
-                  )}
-                </strong>
-
-              </div>
-
-            </div>
-
-
-            {/* DESCRIPTION */}
-
-            <div className="details-section">
-
-              <h3>
-                Gig Description
-              </h3>
-
-              <p>
-                {getGigValue(
-                  selectedGig,
-                  [
-                    'description',
-                    'gig_description',
-                    'requirements',
-                    'details'
-                  ],
-                  'No description available.'
-                )}
-              </p>
-
-            </div>
-
-
-            {/* REQUIRED SKILLS */}
-
-            <div className="details-section">
-
-              <h3>
-                Required Skills
-              </h3>
-
-
-              <div className="tag-list">
-
-                {getSkillList(
-                  selectedGig.required_skills || selectedGig.skills || selectedGig.gig_tags?.skills
-                ).map(
-                  (skill) => (
-
-                    <span
-                      key={skill}
-                      className="tag"
-                    >
-                      {skill}
-                    </span>
-
-                  )
-                )}
-
-              </div>
-
-            </div>
-
-
-            {/* MATCHING SKILLS */}
-
-            {selectedGig.recommendation && (
-
-              <div className="details-section">
-
-                <h3>
-                  Why This Gig Matches You
-                </h3>
-
-
-                <div className="match-explanation">
-
-                  <div>
-
-                    <span>
-                      Match Score
-                    </span>
-
-                    <strong>
-                      {
-                        selectedGig
-                          .recommendation
-                          .score
-                      }%
-                    </strong>
-
-                  </div>
-
-
-                  <div>
-
-                    <span>
-                      Matching Skills
-                    </span>
-
-                    <div className="tag-list">
-
-                      {selectedGig
-                        .recommendation
-                        .similarity
-                        ?.common_tags
-                        ?.map(
-                          (tag) => (
-
-                            <span
-                              key={tag}
-                              className="tag"
-                            >
-                              {tag}
-                            </span>
-
-                          )
-                        )}
-
-                    </div>
-
-                  </div>
-
-
-                  {selectedGig
-                    .recommendation
-                    .similarity
-                    ?.missing_tags
-                    ?.length > 0 && (
-
-                    <div>
-
-                      <span>
-                        Skills You May Need
-                      </span>
-
-                      <div className="tag-list">
-
-                        {selectedGig
-                          .recommendation
-                          .similarity
-                          .missing_tags
-                          .map(
-                            (tag) => (
-
-                              <span
-                                key={tag}
-                                className="missing-tag"
-                              >
-                                {tag}
-                              </span>
-
-                            )
-                          )}
-
-                      </div>
-
-                    </div>
-
-                  )}
-
-                </div>
-
-              </div>
-
-            )}
-
-
-            {/* APPLICATION STATUS */}
-
-            {applicationMessage && (
-
-              <div className="application-message">
-                {applicationMessage}
-              </div>
-
-            )}
-
-
-            {applicationError && (
-
-              <div className="application-error">
-                {applicationError}
-              </div>
-
-            )}
-
-
-            {/* APPLY BUTTON */}
-
-            <button
-              className="apply-button"
-              onClick={handleApply}
-              disabled={
-                applying ||
-                Boolean(applicationMessage)
-              }
-            >
-              {applying
-                ? 'Submitting Application...'
-                : applicationMessage
-                  ? 'Application Submitted'
-                  : 'Apply for This Gig'}
-            </button>
-
-          </section>
-
-        )}
-
-
-        {/* =================================================
-            RECOMMENDATIONS
-        ================================================== */}
-
-        {!selectedGig && (
-
-          <>
-
-            <section className="worker-summary">
-              <form onSubmit={saveProfile} style={{ width: '100%' }}>
-                <h2>My worker profile</h2>
-                <label>Skills (comma-separated)<input value={profile.skills} onChange={(event) => setProfile({ ...profile, skills: event.target.value })} /></label>
-                <label>Experience (years)<input type="number" min="0" value={profile.experienceYears} onChange={(event) => setProfile({ ...profile, experienceYears: event.target.value })} /></label>
-                <label>Education<input value={profile.education} onChange={(event) => setProfile({ ...profile, education: event.target.value })} /></label>
-                <label>Availability<input value={profile.availability} onChange={(event) => setProfile({ ...profile, availability: event.target.value })} /></label>
-                <label>About me<textarea value={profile.bio} onChange={(event) => setProfile({ ...profile, bio: event.target.value })} /></label>
-                <button type="submit" className="view-gig-button">Save profile</button>
-                {profileSaved && <p role="status">{profileSaved}</p>}
-              </form>
+              <section className="details-section">
+                <h2>About this gig</h2>
+                <p>{getGigValue(selectedGig, ['description', 'gig_description', 'requirements', 'details'], 'No description available.')}</p>
+              </section>
+              <section className="details-section">
+                <h2>Skills for this gig</h2>
+                <div className="tag-list">{getSkillList(selectedGig.required_skills || selectedGig.skills || selectedGig.gig_tags?.skills).map((skill, index) => <span className="tag" key={`${skill}-${index}`}>{skill}</span>)}</div>
+              </section>
+              {selectedGig.recommendation && <section className="details-section">
+                <h2>Why this matches your profile</h2>
+                <p className="match-note">Your recommendation score is calculated from how closely your saved skills match the gig requirements.</p>
+                <div className="tag-list">{(selectedGig.recommendation.similarity?.common_tags || []).map((tag, index) => <span className="tag" key={`${tag}-${index}`}>{tag}</span>)}</div>
+              </section>}
+              {applicationMessage && <p className="application-message" role="status">{applicationMessage}</p>}
+              {applicationError && <p className="application-error" role="alert">{applicationError}</p>}
+              <button type="button" className="apply-button" onClick={() => handleApply()} disabled={applying || Boolean(applicationMessage)}>
+                {applying ? 'Submitting application…' : applicationMessage ? 'Application submitted' : 'Apply for this gig'}
+              </button>
             </section>
-
-            <section className="recommendations">
-              <div className="section-heading"><h2>My Applications</h2><span>{applications.length} submitted</span></div>
-              {applications.length === 0 ? <p>You have not applied to any gigs yet.</p> : applications.map((application) => {
-                const gig = allGigs.find((item) => String(item.gig_id) === String(application.gig_id))
-                return <article key={application.application_id} className="gig-card">
-                  <h3>{gig?.title || `Gig #${application.gig_id}`}</h3>
-                  <p>Applied {new Date(application.applied_at).toLocaleDateString()} · Status: <strong>{application.status}</strong></p>
-                </article>
-              })}
-            </section>
-
-            <section className="welcome-section">
-
-              <div>
-
-                <h2>
-                  Recommended Gigs
-                </h2>
-
-                <p>
-                  Opportunities matched to
-                  your skills and profile.
-                </p>
-
-              </div>
-
-            </section>
-
-
-            {/* WORKER SUMMARY */}
-
-            {worker && (
-
-              <section className="worker-summary">
-
-                <div className="summary-item">
-
-                  <span className="summary-label">
-                    Worker ID
-                  </span>
-
-                  <span className="summary-value">
-                    {worker.worker_id}
-                  </span>
-
+          ) : (
+            <>
+              <section className="welcome-section">
+                <div>
+                  <p className="eyebrow">WORKER DASHBOARD</p>
+                  <h1>{greeting}, {firstName}</h1>
+                  <p>Here are opportunities that match your skills and profile.</p>
                 </div>
-
-
-                <div className="summary-item">
-
-                  <span className="summary-label">
-                    Location
-                  </span>
-
-                  <span className="summary-value">
-                    {worker.location}
-                  </span>
-
-                </div>
-
-
-                <div className="summary-item">
-
-                  <span className="summary-label">
-                    Experience
-                  </span>
-
-                  <span className="summary-value">
-                    {worker.experience_years}
-                    {' '}
-                    years
-                  </span>
-
-                </div>
-
-
-                <div className="summary-item">
-
-                  <span className="summary-label">
-                    Reputation
-                  </span>
-
-                  <span className="summary-value">
-                    {Number(worker.reputation || 0).toFixed(1)}
-                  </span>
-
-                </div>
-
+                {worker?.location && <span className="location-chip"><span aria-hidden="true">⌖</span>{worker.location}</span>}
               </section>
 
-            )}
-
-
-            {/* LOADING */}
-
-            {loading && (
-
-              <div className="status-message">
-
-                <div className="loading-spinner"></div>
-
-                <p>
-                  Finding gigs that match
-                  your skills...
-                </p>
-
-              </div>
-
-            )}
-
-
-            {/* ERROR */}
-
-            {!loading &&
-              error && (
-
-              <div className="status-message error-message">
-
-                <h3>
-                  Unable to load recommendations
-                </h3>
-
-                <p>
-                  {error}
-                </p>
-
-              </div>
-
-            )}
-
-
-            {/* RECOMMENDATIONS */}
-
-            {!loading &&
-              !error &&
-              recommendations.length > 0 && (
-
-              <section className="recommendations">
-
-                <div className="section-heading">
-
-                  <h2>
-                    Your Matches
-                  </h2>
-
-                  <span>
-                    {
-                      recommendations.length
-                    }
-                    {' '}
-                    recommendations
-                  </span>
-
-                </div>
-
-
-                <div className="gig-grid">
-
-                  {recommendations.map(
-                    (gig) => (
-
-                    <article
-                      key={gig.gig_id}
-                      className="gig-card"
-                    >
-
-                      <div className="gig-card-header">
-
-                        <div className="gig-title-section">
-
-                          <span className="gig-id">
-                            {gig.gig_id}
-                          </span>
-
-                          <h3>
-                            {getGigTitle(
-                              allGigs.find(
-                                (item) =>
-                                  String(
-                                    item.gig_id ||
-                                    item.id
-                                  ) ===
-                                  String(
-                                    gig.gig_id
-                                  )
-                              ) || gig
-                            )}
-                          </h3>
-
-                        </div>
-
-
-                        <div
-                          className={`match-score ${getMatchClass(
-                            gig.match_strength
-                          )}`}
-                        >
-
-                          <strong>
-                            {gig.score}%
-                          </strong>
-
-                          <span>
-                            {gig.match_strength}
-                          </span>
-
-                        </div>
-
-                      </div>
-
-
-                      <div className="gig-details">
-
-                        <div className="detail-item">
-
-                          <span>
-                            Location
-                          </span>
-
-                          <strong>
-                            {
-                              gig.gig_location ||
-                              'Not specified'
-                            }
-                          </strong>
-
-                        </div>
-
-
-                        <div className="detail-item">
-
-                          <span>
-                            Ranking
-                          </span>
-
-                          <strong>
-                            #{gig.rank}
-                          </strong>
-
-                        </div>
-
-                      </div>
-
-
-                      <div className="match-information">
-
-                        <h4>
-                          Matching Skills
-                        </h4>
-
-
-                        {gig.similarity
-                          ?.common_tags
-                          ?.length > 0 ? (
-
-                          <div className="tag-list">
-
-                            {gig.similarity
-                              .common_tags
-                              .map(
-                                (tag) => (
-
-                                  <span
-                                    key={tag}
-                                    className="tag"
-                                  >
-                                    {tag}
-                                  </span>
-
-                                )
-                              )}
-
-                          </div>
-
-                        ) : (
-
-                          <p className="no-skills">
-                            No direct skill matches.
-                          </p>
-
-                        )}
-
-                      </div>
-
-
-                      {gig.similarity
-                        ?.missing_tags
-                        ?.length > 0 && (
-
-                        <div className="missing-skills">
-
-                          <h4>
-                            Skills to Consider
-                          </h4>
-
-
-                          <div className="tag-list">
-
-                            {gig.similarity
-                              .missing_tags
-                              .map(
-                                (tag) => (
-
-                                  <span
-                                    key={tag}
-                                    className="missing-tag"
-                                  >
-                                    {tag}
-                                  </span>
-
-                                )
-                              )}
-
-                          </div>
-
-                        </div>
-
-                      )}
-
-
-                      <button
-                        className="view-gig-button"
-                        onClick={() =>
-                          handleViewGig(gig)
-                        }
-                      >
-                        View Gig
-                      </button>
-
-                    </article>
-
-                  ))}
-
-                </div>
-
+              <section className="worker-summary" aria-label="Your marketplace summary">
+                {summaryItems.map((item) => <article className={`summary-card summary-${item.tone}`} key={item.label}>
+                  <span className="summary-label">{item.label}</span>
+                  <strong className="summary-value">{item.value}</strong>
+                  <span className="summary-detail">{item.detail}</span>
+                </article>)}
               </section>
 
-            )}
+              <div className="dashboard-grid">
+                <section className="recommendations main-column" id="recommendations" aria-labelledby="recommendations-title">
+                  <div className="section-heading">
+                    <div><p className="eyebrow">CURATED FOR YOU</p><h2 id="recommendations-title">Recommended gigs</h2></div>
+                    {!loading && !error && <span className="result-count">{filteredRecommendations.length} {filteredRecommendations.length === 1 ? 'opportunity' : 'opportunities'}</span>}
+                  </div>
 
+                  {applicationMessage && <p className="application-message" role="status">{applicationMessage}</p>}
+                  {applicationError && <p className="application-error" role="alert">{applicationError}</p>}
 
-            {/* NO RESULTS */}
+                  {loading && <div className="status-message" role="status"><span className="loading-spinner" /><p>Finding gigs that match your skills…</p></div>}
+                  {!loading && error && <div className="status-message error-message" role="alert"><h2>Unable to load recommendations</h2><p>{error}</p></div>}
+                  {!loading && !error && recommendations.length > 0 && filteredRecommendations.length === 0 && <div className="status-message"><h2>No gigs match that search</h2><p>Try a different title, category or skill.</p></div>}
+                  {!loading && !error && recommendations.length === 0 && <div className="status-message"><h2>No matching gigs yet</h2><p>Update your skills to help us find relevant opportunities.</p><button type="button" className="text-action" onClick={() => { setShowProfileEditor(true); document.getElementById('profile')?.scrollIntoView({ behavior: 'smooth' }) }}>Review your profile →</button></div>}
 
-            {!loading &&
-              !error &&
-              recommendations.length === 0 && (
+                  {!loading && !error && filteredRecommendations.length > 0 && <div className="gig-list">
+                    {filteredRecommendations.map((recommendation) => {
+                      const gig = getFullGig(recommendation)
+                      const title = getGigTitle(gig)
+                      const skills = recommendation.similarity?.common_tags?.length
+                        ? recommendation.similarity.common_tags.slice(0, 4)
+                        : getSkillList(gig.required_skills || gig.skills || gig.gig_tags?.skills).slice(0, 4)
+                      const budget = formatBudget(getGigValue(gig, ['budget', 'pay', 'payment'], null))
+                      const location = getGigValue(gig, ['location', 'gig_location'], 'Location not specified')
+                      const duration = getGigValue(gig, ['duration', 'deadline'], '')
+                      const hasApplied = applications.some((application) => String(application.gig_id) === String(recommendation.gig_id))
+                      return <article className="gig-card" key={recommendation.gig_id}>
+                        <div className="gig-card-main">
+                          <span className="gig-mark" aria-hidden="true">{String(gig.category || title).charAt(0).toUpperCase()}</span>
+                          <div className="gig-title-section">
+                            <span className="gig-category">{getGigValue(gig, ['category'], 'Open opportunity')}</span>
+                            <h3>{title}</h3>
+                            <p className="gig-meta"><span>⌖ {location}</span>{duration && <span>◷ {duration}</span>}</p>
+                          </div>
+                          <div className={`match-score ${getMatchClass(recommendation.match_strength)}`}><strong>{recommendation.score}%</strong><span>match</span></div>
+                        </div>
+                        {skills.length > 0 && <div className="tag-list gig-tags">{skills.map((skill, index) => <span className="tag" key={`${skill}-${index}`}>{skill}</span>)}</div>}
+                        <div className="gig-card-footer">
+                          <div className="gig-budget">{budget ? <><small>Budget</small><strong>{budget}</strong></> : <small>Budget not specified</small>}</div>
+                          <div className="gig-actions">
+                            <button type="button" className="secondary-action" onClick={() => handleViewGig(recommendation)}>View details</button>
+                            <button type="button" className="primary-action" onClick={() => handleApply(gig)} disabled={applying || hasApplied}>{applying ? 'Applying…' : hasApplied ? 'Applied' : 'Apply'}</button>
+                          </div>
+                        </div>
+                      </article>
+                    })}
+                  </div>}
+                </section>
 
-              <div className="status-message">
+                <aside className="dashboard-aside" aria-label="Worker profile and applications">
+                  <section className="side-panel profile-panel" id="profile" aria-labelledby="profile-title">
+                    <div className="panel-heading"><div><p className="eyebrow">YOUR PROFILE</p><h2 id="profile-title">Profile completion</h2></div><strong className="completion-value">{profileCompletion}%</strong></div>
+                    <div className="completion-track" role="progressbar" aria-label="Profile completion" aria-valuemin="0" aria-valuemax="100" aria-valuenow={profileCompletion}><span style={{ width: `${profileCompletion}%` }} /></div>
+                    <p className="panel-copy">{profileCompletion === 100 ? 'Your profile is ready to support better matches.' : 'Add the missing details below to help clients understand your experience.'}</p>
+                    <button type="button" className="primary-action profile-toggle" onClick={() => setShowProfileEditor((visible) => !visible)}>{showProfileEditor ? 'Close profile editor' : profileCompletion === 100 ? 'Edit profile' : 'Complete profile'}</button>
+                    {showProfileEditor && <form className="profile-editor" onSubmit={saveProfile}>
+                      <label>Skills <input value={profile.skills} onChange={(event) => setProfile({ ...profile, skills: event.target.value })} placeholder="e.g. Carpentry, React" /></label>
+                      <label>Experience (years) <input type="number" min="0" value={profile.experienceYears} onChange={(event) => setProfile({ ...profile, experienceYears: event.target.value })} /></label>
+                      <label>Education <input value={profile.education} onChange={(event) => setProfile({ ...profile, education: event.target.value })} /></label>
+                      <label>Availability <input value={profile.availability} onChange={(event) => setProfile({ ...profile, availability: event.target.value })} /></label>
+                      <label>About you <textarea value={profile.bio} onChange={(event) => setProfile({ ...profile, bio: event.target.value })} rows="3" /></label>
+                      <button type="submit" className="primary-action">Save profile</button>
+                      {profileSaved && <p className="profile-feedback" role="status">{profileSaved}</p>}
+                    </form>}
+                  </section>
 
-                <h3>
-                  No matching gigs found
-                </h3>
+                  <section className="side-panel" aria-labelledby="skills-title">
+                    <div className="panel-heading"><div><p className="eyebrow">WHAT YOU DO</p><h2 id="skills-title">Your skills</h2></div><button type="button" className="text-action" onClick={() => { setShowProfileEditor(true); setActiveSection('profile'); document.getElementById('profile')?.scrollIntoView({ behavior: 'smooth' }) }}>Edit</button></div>
+                    {getSkillList(profile.skills).length > 0
+                      ? <div className="tag-list">{getSkillList(profile.skills).slice(0, 8).map((skill, index) => <span className="tag" key={`${skill}-${index}`}>{skill}</span>)}</div>
+                      : <p className="panel-copy">Add your skills to improve your recommendations.</p>}
+                  </section>
 
-                <p>
-                  Try updating your worker
-                  profile and skills.
-                </p>
-
+                  <section className="side-panel applications-panel" id="applications" aria-labelledby="applications-title">
+                    <div className="panel-heading"><div><p className="eyebrow">YOUR ACTIVITY</p><h2 id="applications-title">Recent applications</h2></div>{applications.length > 3 && <button type="button" className="text-action" onClick={() => setShowAllApplications((show) => !show)}>{showAllApplications ? 'Show recent' : 'View all'}</button>}</div>
+                    {applications.length === 0 ? <p className="panel-copy">Applications you submit will appear here.</p> : <div className="application-list">
+                      {visibleApplications.map((application) => {
+                        const gig = allGigs.find((item) => String(item.gig_id) === String(application.gig_id))
+                        return <article className="application-row" key={application.application_id}>
+                          <div className="application-mark" aria-hidden="true">{String(gig?.category || gig?.title || 'G').charAt(0).toUpperCase()}</div>
+                          <div className="application-copy"><strong>{gig?.title || `Gig #${application.gig_id}`}</strong><span>{application.applied_at ? new Date(application.applied_at).toLocaleDateString() : 'Submitted'}</span></div>
+                          <span className={`application-status status-${String(application.status || 'pending').toLowerCase().replace(/\s+/g, '-')}`}>{application.status}</span>
+                        </article>
+                      })}
+                    </div>}
+                  </section>
+                </aside>
               </div>
-
-            )}
-
-          </>
-
-        )}
-
-      </main>
-
+            </>
+          )}
+        </main>
+      </div>
     </div>
   )
 }
