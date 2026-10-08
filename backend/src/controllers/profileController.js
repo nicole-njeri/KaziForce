@@ -122,6 +122,10 @@ const getWorkerProfile = async (req, res) => {
 const updateWorkerProfile = async (req, res) => {
   try {
     const { bio = '', experienceYears = null, education = '', availability = '', skills = '' } = req.body
+    if (typeof bio !== 'string' || bio.length > 5000) return res.status(400).json({ message: 'Bio must be text with at most 5000 characters.' })
+    if (typeof education !== 'string' || education.length > 255) return res.status(400).json({ message: 'Education must be text with at most 255 characters.' })
+    if (typeof availability !== 'string' || availability.length > 100) return res.status(400).json({ message: 'Availability must be text with at most 100 characters.' })
+    if (typeof skills !== 'string') return res.status(400).json({ message: 'Skills must be text.' })
     if (experienceYears !== null && (!Number.isInteger(Number(experienceYears)) || Number(experienceYears) < 0)) {
       return res.status(400).json({ message: 'Experience must be a non-negative whole number.' })
     }

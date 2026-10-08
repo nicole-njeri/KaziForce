@@ -5,6 +5,10 @@ import Login from './pages/Login'
 
 import WorkerDashboard from './pages/WorkerDashboard'
 import WorkerProfile from './pages/WorkerProfile'
+import WorkerGigs from './pages/WorkerGigs'
+import WorkerGigDetails from './pages/WorkerGigDetails'
+import WorkerApplications from './pages/WorkerApplications'
+import WorkerApplicationDetails from './pages/WorkerApplicationDetails'
 import ClientDashboard from './pages/ClientDashboard'
 import AdminDashboard from './pages/AdminDashboard'
 
@@ -35,6 +39,11 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        <Route path="/worker/gigs" element={<ProtectedRoute allowedRoles={['Worker']}><WorkerGigs /></ProtectedRoute>} />
+        <Route path="/worker/gigs/:gigId" element={<ProtectedRoute allowedRoles={['Worker']}><WorkerGigDetails /></ProtectedRoute>} />
+        <Route path="/worker/applications" element={<ProtectedRoute allowedRoles={['Worker']}><WorkerApplications /></ProtectedRoute>} />
+        <Route path="/worker/applications/:applicationId" element={<ProtectedRoute allowedRoles={['Worker']}><WorkerApplicationDetails /></ProtectedRoute>} />
 
         <Route
           path="/worker/profile"

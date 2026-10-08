@@ -96,6 +96,9 @@ const createApplication = async (req, res) => {
     })
 
   } catch (error) {
+    if (error.code === '23505') {
+      return res.status(409).json({ message: 'You have already applied for this gig.' })
+    }
     console.error(
       'Create application error:',
       error
@@ -120,17 +123,17 @@ const getWorkerApplications = async (
     const result =
       await pool.query(
         `
-        SELECT
-          application_id,
-          worker_id,
-          gig_id,
-          cover_message,
-          status,
-          applied_at,
-          updated_at
-        FROM applications
-        WHERE worker_id = $1
-        ORDER BY applied_at DESC
+        SELECT a.application_id, a.worker_id, a.gig_id, a.cover_message,
+          a.status, a.applied_at, a.updated_at, g.title AS gig_title,
+          g.category AS gig_category, g.location AS gig_location,
+          g.budget AS gig_budget, g.duration AS gig_duration,
+          COALESCE(cp.organization_name, u.full_name) AS client_name
+        FROM applications a
+        JOIN gigs g ON g.gig_id = a.gig_id
+        JOIN users u ON u.user_id = g.client_id
+        LEFT JOIN client_profiles cp ON cp.user_id = u.user_id
+        WHERE a.worker_id = $1
+        ORDER BY a.applied_at DESC
         `,
         [
           workerId
@@ -170,16 +173,17 @@ const getApplicationById = async (
     const result =
       await pool.query(
         `
-        SELECT
-          application_id,
-          worker_id,
-          gig_id,
-          cover_message,
-          status,
-          applied_at,
-          updated_at
-        FROM applications
-        WHERE application_id = $1
+        SELECT a.application_id, a.worker_id, a.gig_id, a.cover_message,
+          a.status, a.applied_at, a.updated_at, g.title AS gig_title,
+          g.category AS gig_category, g.description AS gig_description,
+          g.location AS gig_location, g.budget AS gig_budget,
+          g.duration AS gig_duration, g.required_skills AS gig_required_skills,
+          g.status AS gig_status, COALESCE(cp.organization_name, u.full_name) AS client_name
+        FROM applications a
+        JOIN gigs g ON g.gig_id = a.gig_id
+        JOIN users u ON u.user_id = g.client_id
+        LEFT JOIN client_profiles cp ON cp.user_id = u.user_id
+        WHERE a.application_id = $1
         `,
         [
           applicationId

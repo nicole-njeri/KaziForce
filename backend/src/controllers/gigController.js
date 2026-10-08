@@ -116,21 +116,23 @@ const getAllGigs = async (
       await pool.query(
         `
         SELECT
-          gig_id,
-          client_id,
-          title,
-          description,
-          category,
-          required_skills,
-          location,
-          budget,
-          duration,
-          status,
-          created_at,
-          updated_at
-        FROM gigs
-        WHERE status = 'Open'
-        ORDER BY created_at DESC
+          gigs.gig_id,
+          gigs.client_id,
+          COALESCE(client_profiles.organization_name, users.full_name) AS client_name,
+          gigs.title,
+          gigs.description,
+          gigs.category,
+          gigs.required_skills,
+          gigs.location,
+          gigs.budget,
+          gigs.duration,
+          gigs.status,
+          gigs.created_at,
+          gigs.updated_at
+        FROM gigs JOIN users ON users.user_id = gigs.client_id
+        LEFT JOIN client_profiles ON client_profiles.user_id = users.user_id
+        WHERE gigs.status = 'Open'
+        ORDER BY gigs.created_at DESC
         `
       )
 
@@ -168,21 +170,14 @@ const getGigById = async (
     const result =
       await pool.query(
         `
-        SELECT
-          gig_id,
-          client_id,
-          title,
-          description,
-          category,
-          required_skills,
-          location,
-          budget,
-          duration,
-          status,
-          created_at,
-          updated_at
-        FROM gigs
-        WHERE gig_id = $1
+        SELECT gigs.gig_id, gigs.client_id,
+          COALESCE(client_profiles.organization_name, users.full_name) AS client_name,
+          gigs.title, gigs.description, gigs.category, gigs.required_skills,
+          gigs.location, gigs.budget, gigs.duration, gigs.status,
+          gigs.created_at, gigs.updated_at
+        FROM gigs JOIN users ON users.user_id = gigs.client_id
+        LEFT JOIN client_profiles ON client_profiles.user_id = users.user_id
+        WHERE gigs.gig_id = $1
         `,
         [gigId]
       )
