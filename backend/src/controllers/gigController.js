@@ -172,6 +172,7 @@ const getGigById = async (
         `
         SELECT gigs.gig_id, gigs.client_id,
           COALESCE(client_profiles.organization_name, users.full_name) AS client_name,
+          client_profiles.bio AS client_bio,
           gigs.title, gigs.description, gigs.category, gigs.required_skills,
           gigs.location, gigs.budget, gigs.duration, gigs.status,
           gigs.created_at, gigs.updated_at
