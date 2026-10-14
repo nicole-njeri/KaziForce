@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import ClientVerificationPanel from '../components/ClientVerificationPanel'
 
 const API = 'http://localhost:5000/api'
 const emptyGig = { title: '', description: '', category: '', requiredSkills: '', location: '', budget: '', duration: '' }
@@ -169,6 +170,8 @@ function ClientDashboard() {
           </form>
         </>}
       </section>
+      <p role="note" style={{ marginTop: -20, marginBottom: 24, color: '#536679' }}>Your organization bio is visible to workers on public gig detail pages.</p>
+      <ClientVerificationPanel />
       <h2 style={styles.heading}>Post a gig</h2>
       <form onSubmit={postGig} style={styles.form}>
         {field('title', 'Title', 'text', true)}{field('category', 'Category')}{field('requiredSkills', 'Required skills (comma-separated)')}

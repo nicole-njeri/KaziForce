@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import AdminVerificationQueue from '../components/AdminVerificationQueue'
 
 const API = 'http://localhost:5000/api/admin'
 
@@ -49,6 +50,7 @@ function AdminDashboard() {
     {error && <p role="alert" style={{ color: '#a32222' }}>{error}</p>}{message && <p role="status">{message}</p>}
     <section style={styles.section}><h2 style={styles.heading}>User management</h2>{users.map((user) => <article key={user.user_id} style={styles.row}><div><strong>{user.full_name}</strong><p>{user.email} · {user.role} · {user.is_active ? 'Active' : 'Suspended'}</p></div>{user.role !== 'Administrator' && <button onClick={() => moderateUser(user)}>{user.is_active ? 'Suspend' : 'Restore'}</button>}</article>)}</section>
     <section style={styles.section}><h2 style={styles.heading}>Gig moderation</h2>{gigs.map((gig) => <article key={gig.gig_id} style={styles.row}><div><strong>{gig.title}</strong><p>{gig.client_name} · {gig.location} · {gig.status} · {gig.application_count} applications</p></div><button onClick={() => moderateGig(gig)}>{gig.status === 'Closed' ? 'Reopen' : 'Close'}</button></article>)}</section>
+    <AdminVerificationQueue />
   </main>
 }
 

@@ -1,5 +1,21 @@
 const pool = require('../config/db')
 
+// Public gig responses expose only the current type and status for each
+// verification request. Request details, explanations, reviewer IDs, and
+// internal notes remain private to the owner and administrators.
+const publicClientVerifications = `COALESCE((
+  SELECT jsonb_agg(
+    jsonb_build_object('type', latest.verification_type, 'status', latest.status)
+    ORDER BY latest.verification_type
+  )
+  FROM (
+    SELECT DISTINCT ON (verification_type) verification_type, status
+    FROM client_verification_requests
+    WHERE client_id = gigs.client_id
+    ORDER BY verification_type, submitted_at DESC, verification_id DESC
+  ) latest
+), '[]'::jsonb) AS client_verifications`
+
 
 // CREATE GIG
 const createGig = async (req, res) => {
@@ -119,6 +135,7 @@ const getAllGigs = async (
           gigs.gig_id,
           gigs.client_id,
           COALESCE(client_profiles.organization_name, users.full_name) AS client_name,
+          ${publicClientVerifications},
           gigs.title,
           gigs.description,
           gigs.category,
@@ -173,6 +190,7 @@ const getGigById = async (
         SELECT gigs.gig_id, gigs.client_id,
           COALESCE(client_profiles.organization_name, users.full_name) AS client_name,
           client_profiles.bio AS client_bio,
+          ${publicClientVerifications},
           gigs.title, gigs.description, gigs.category, gigs.required_skills,
           gigs.location, gigs.budget, gigs.duration, gigs.status,
           gigs.created_at, gigs.updated_at

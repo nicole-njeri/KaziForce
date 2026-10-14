@@ -10,6 +10,7 @@ const matchingRoutes = require('./routes/matchingRoutes')
 const applicationRoutes = require('./routes/applicationRoutes')
 const gigRoutes = require('./routes/gigRoutes')
 const adminRoutes = require('./routes/adminRoutes')
+const clientVerificationRoutes = require('./routes/clientVerificationRoutes')
 
 const app = express()
 
@@ -69,6 +70,7 @@ app.use(
 )
 
 app.use('/api/admin', adminRoutes)
+app.use('/api/client-verifications', clientVerificationRoutes)
 
 
 // -------------------------------------------------------
