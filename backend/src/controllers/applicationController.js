@@ -129,8 +129,8 @@ const getWorkerApplications = async (
           g.budget AS gig_budget, g.duration AS gig_duration,
           COALESCE(cp.organization_name, u.full_name) AS client_name
         FROM applications a
-        JOIN gigs g ON g.gig_id = a.gig_id
-        JOIN users u ON u.user_id = g.client_id
+        LEFT JOIN gigs g ON g.gig_id = a.gig_id
+        LEFT JOIN users u ON u.user_id = g.client_id
         LEFT JOIN client_profiles cp ON cp.user_id = u.user_id
         WHERE a.worker_id = $1
         ORDER BY a.applied_at DESC
@@ -180,8 +180,8 @@ const getApplicationById = async (
           g.duration AS gig_duration, g.required_skills AS gig_required_skills,
           g.status AS gig_status, COALESCE(cp.organization_name, u.full_name) AS client_name
         FROM applications a
-        JOIN gigs g ON g.gig_id = a.gig_id
-        JOIN users u ON u.user_id = g.client_id
+        LEFT JOIN gigs g ON g.gig_id = a.gig_id
+        LEFT JOIN users u ON u.user_id = g.client_id
         LEFT JOIN client_profiles cp ON cp.user_id = u.user_id
         WHERE a.application_id = $1
         `,
@@ -241,7 +241,7 @@ const getGigApplications = async (req, res) => {
               wp.availability, wr.rating AS review_rating, wr.review AS client_review
        FROM applications a
        JOIN gigs g ON g.gig_id = a.gig_id
-       JOIN users u ON u.user_id::text = a.worker_id::text
+       LEFT JOIN users u ON u.user_id::text = a.worker_id::text
        LEFT JOIN worker_profiles wp ON wp.user_id = u.user_id
        LEFT JOIN worker_reviews wr ON wr.application_id = a.application_id
        WHERE a.gig_id = $1 AND g.client_id = $2
