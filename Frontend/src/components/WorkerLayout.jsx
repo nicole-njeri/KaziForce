@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import '../pages/WorkerFlow.css'
 import { readAccount } from './workerApi'
@@ -12,13 +13,34 @@ const links = [
 export function WorkerLayout({ children }) {
   const location = useLocation()
   const navigate = useNavigate()
+  const accountMenuRef = useRef(null)
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false)
   const account = readAccount()
   const name = account.full_name || account.fullName || 'Worker'
   const logout = () => {
+    setAccountMenuOpen(false)
     localStorage.removeItem('token')
     localStorage.removeItem('user')
     navigate('/login')
   }
+
+  useEffect(() => {
+    if (!accountMenuOpen) return undefined
+
+    const closeOnOutsideClick = (event) => {
+      if (!accountMenuRef.current?.contains(event.target)) setAccountMenuOpen(false)
+    }
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') setAccountMenuOpen(false)
+    }
+
+    document.addEventListener('pointerdown', closeOnOutsideClick)
+    document.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsideClick)
+      document.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [accountMenuOpen])
 
   return <div className="worker-app">
     <aside className="wf-sidebar">
@@ -32,7 +54,7 @@ export function WorkerLayout({ children }) {
       <button className="wf-logout" type="button" onClick={logout}><span aria-hidden="true">↪</span>Log out</button>
     </aside>
     <div className="wf-main-shell">
-      <header className="wf-topbar"><div className="wf-topbar-spacer"/><div className="wf-account"><span className="wf-avatar-small">{name.charAt(0).toUpperCase()}</span><span><strong>{name}</strong><small>Worker</small></span></div></header>
+      <header className="wf-topbar"><div className="wf-topbar-spacer"/><div className="wf-account-menu" ref={accountMenuRef}><button className="wf-account" type="button" aria-haspopup="menu" aria-expanded={accountMenuOpen} aria-controls="wf-account-dropdown" onClick={() => setAccountMenuOpen((open) => !open)}><span className="wf-avatar-small" aria-hidden="true">{name.charAt(0).toUpperCase()}</span><span className="wf-account-copy"><strong>{name}</strong><small>Worker</small></span><span className="wf-account-chevron" aria-hidden="true">⌄</span></button>{accountMenuOpen && <div className="wf-account-dropdown" id="wf-account-dropdown" role="menu"><Link role="menuitem" to="/worker/profile" onClick={() => setAccountMenuOpen(false)}>My profile</Link><Link role="menuitem" to="/worker/profile/edit" onClick={() => setAccountMenuOpen(false)}>Edit profile</Link><button role="menuitem" type="button" onClick={logout}>Log out</button></div>}</div></header>
       <main className="wf-content">{children}</main>
     </div>
   </div>
